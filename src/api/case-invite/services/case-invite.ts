@@ -61,6 +61,20 @@ export default factories.createCoreService('api::case-invite.case-invite', ({ st
       } as any,
     });
 
+    // Add accepting user as an authorized member of the case (FPR Multi-Tenant Security)
+    const caseDoc = invite.case as { documentId?: string } | undefined;
+    if (caseDoc?.documentId) {
+      await strapi.documents('api::case.case').update({
+        documentId: caseDoc.documentId,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data: {
+          members: {
+            connect: [userId],
+          },
+        } as any,
+      });
+    }
+
     return {
       success: true,
       case: invite.case,

@@ -565,6 +565,10 @@ export interface ApiCaseCase extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::case.case'> &
       Schema.Attribute.Private;
+    members: Schema.Attribute.Relation<
+      'manyToMany',
+      'plugin::users-permissions.user'
+    >;
     notes: Schema.Attribute.Relation<'oneToMany', 'api::case-note.case-note'>;
     orders: Schema.Attribute.Relation<'oneToMany', 'api::order.order'>;
     owner: Schema.Attribute.Relation<
