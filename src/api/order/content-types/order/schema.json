@@ -1,0 +1,49 @@
+{
+  "kind": "collectionType",
+  "collectionName": "orders",
+  "info": {
+    "singularName": "order",
+    "pluralName": "orders",
+    "displayName": "Court Order",
+    "description": "Court orders made during proceedings"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "Child Arrangements Order",
+        "Care Order",
+        "Supervision Order",
+        "Non-Molestation Order",
+        "Prohibited Steps Order",
+        "Specific Issue Order",
+        "Financial Remedies Order",
+        "Other"
+      ],
+      "required": true
+    },
+    "dateMade": {
+      "type": "date",
+      "required": true
+    },
+    "summary": {
+      "type": "text",
+      "required": true
+    },
+    "expiresOn": {
+      "type": "date"
+    },
+    "documentUrl": {
+      "type": "string"
+    },
+    "case": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::case.case",
+      "inversedBy": "orders"
+    }
+  }
+}

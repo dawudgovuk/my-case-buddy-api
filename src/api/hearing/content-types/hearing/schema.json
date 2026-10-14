@@ -1,0 +1,51 @@
+{
+  "kind": "collectionType",
+  "collectionName": "hearings",
+  "info": {
+    "singularName": "hearing",
+    "pluralName": "hearings",
+    "displayName": "Court Hearing",
+    "description": "Court hearings and case management listings"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "Case Management",
+        "Directions",
+        "Fact-Finding",
+        "Final",
+        "Other"
+      ],
+      "required": true
+    },
+    "date": {
+      "type": "date",
+      "required": true
+    },
+    "time": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "judge": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "text"
+    },
+    "outcome": {
+      "type": "text"
+    },
+    "case": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::case.case",
+      "inversedBy": "hearings"
+    }
+  }
+}

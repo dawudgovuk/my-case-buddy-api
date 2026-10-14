@@ -1,0 +1,29 @@
+{
+  "kind": "collectionType",
+  "collectionName": "case_notes",
+  "info": {
+    "singularName": "case-note",
+    "pluralName": "case-notes",
+    "displayName": "Case Note",
+    "description": "Chronological case notes and updates"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "author": {
+      "type": "string",
+      "required": true
+    },
+    "text": {
+      "type": "text",
+      "required": true
+    },
+    "case": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::case.case",
+      "inversedBy": "notes"
+    }
+  }
+}

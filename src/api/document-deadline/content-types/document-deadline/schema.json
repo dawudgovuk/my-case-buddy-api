@@ -1,0 +1,52 @@
+{
+  "kind": "collectionType",
+  "collectionName": "document_deadlines",
+  "info": {
+    "singularName": "document-deadline",
+    "pluralName": "document-deadlines",
+    "displayName": "Document Deadline",
+    "description": "Filing deadlines for court documents and statements"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "deadlineDate": {
+      "type": "date",
+      "required": true
+    },
+    "documentType": {
+      "type": "string"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "pending",
+        "submitted",
+        "overdue"
+      ],
+      "default": "pending"
+    },
+    "submittedAt": {
+      "type": "datetime"
+    },
+    "case": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::case.case",
+      "inversedBy": "deadlines"
+    },
+    "assignedTo": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    }
+  }
+}

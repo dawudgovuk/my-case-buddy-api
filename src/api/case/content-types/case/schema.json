@@ -1,0 +1,124 @@
+{
+  "kind": "collectionType",
+  "collectionName": "cases",
+  "info": {
+    "singularName": "case",
+    "pluralName": "cases",
+    "displayName": "Family Case",
+    "description": "UK Family Court Cases"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "caseNumber": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "court": {
+      "type": "enumeration",
+      "enum": [
+        "Family Court",
+        "High Court Family Division"
+      ],
+      "default": "Family Court"
+    },
+    "caseType": {
+      "type": "enumeration",
+      "enum": [
+        "Public Law (Care Proceedings)",
+        "Private Law (Child Arrangements)",
+        "Domestic Abuse (Non-Molestation)",
+        "Financial Remedies",
+        "Adoption",
+        "Other"
+      ],
+      "required": true
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "Open",
+        "Stayed",
+        "Concluded"
+      ],
+      "default": "Open"
+    },
+    "startedAt": {
+      "type": "date",
+      "required": true
+    },
+    "allocatedJudge": {
+      "type": "string"
+    },
+    "currentStage": {
+      "type": "string"
+    },
+    "childrenInvolved": {
+      "type": "integer",
+      "default": 0
+    },
+    "seekingPeerSupport": {
+      "type": "boolean",
+      "default": false
+    },
+    "peerSupportNote": {
+      "type": "text"
+    },
+    "peerSupportRequestedAt": {
+      "type": "datetime"
+    },
+    "owner": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "parties": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::party.party",
+      "mappedBy": "case"
+    },
+    "hearings": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::hearing.hearing",
+      "mappedBy": "case"
+    },
+    "orders": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::order.order",
+      "mappedBy": "case"
+    },
+    "documents": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::document.document",
+      "mappedBy": "case"
+    },
+    "notes": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::case-note.case-note",
+      "mappedBy": "case"
+    },
+    "deadlines": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::document-deadline.document-deadline",
+      "mappedBy": "case"
+    },
+    "invites": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::case-invite.case-invite",
+      "mappedBy": "case"
+    }
+  }
+}

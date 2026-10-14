@@ -1,0 +1,48 @@
+{
+  "kind": "collectionType",
+  "collectionName": "documents",
+  "info": {
+    "singularName": "document",
+    "pluralName": "documents",
+    "displayName": "Case Document",
+    "description": "Case documents, bundles, and statements"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "Application",
+        "Statement",
+        "Medical",
+        "Expert Report",
+        "Bundle",
+        "Order",
+        "Other"
+      ],
+      "required": true
+    },
+    "uploadedAt": {
+      "type": "datetime"
+    },
+    "url": {
+      "type": "string",
+      "required": true
+    },
+    "notes": {
+      "type": "text"
+    },
+    "case": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::case.case",
+      "inversedBy": "documents"
+    }
+  }
+}
