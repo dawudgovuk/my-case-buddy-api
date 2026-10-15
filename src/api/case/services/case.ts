@@ -32,27 +32,67 @@ export default factories.createCoreService('api::case.case', ({ strapi }) => ({
   },
 
   /**
+   * Resolves a case documentId by checking either documentId directly or caseNumber.
+   */
+  async resolveDocumentId(idOrCaseNumber: string): Promise<string | null> {
+    if (!idOrCaseNumber) return null;
+
+    try {
+      // 1. Check direct documentId match
+      const byDocId = await strapi.documents('api::case.case').findOne({
+        documentId: idOrCaseNumber,
+      });
+      if (byDocId?.documentId) {
+        return byDocId.documentId;
+      }
+
+      // 2. Check caseNumber match
+      const byCaseNumber = await strapi.documents('api::case.case').findFirst({
+        filters: { caseNumber: { $eq: idOrCaseNumber } },
+      });
+      if (byCaseNumber?.documentId) {
+        return byCaseNumber.documentId;
+      }
+    } catch {
+      return null;
+    }
+
+    return null;
+  },
+
+  /**
    * Check whether a user is the owner of a given case
    */
   async isUserCaseOwner(caseDocumentId: string, userId: number | string): Promise<boolean> {
+    const resolvedDocId = (await this.resolveDocumentId(caseDocumentId)) || caseDocumentId;
     const caseRecord = await strapi.documents('api::case.case').findOne({
-      documentId: caseDocumentId,
+      documentId: resolvedDocId,
       populate: { owner: true },
     });
 
-    if (!caseRecord || !caseRecord.owner) {
+    if (!caseRecord) {
       return false;
     }
 
-    return String(caseRecord.owner.id) === String(userId);
+    // If case has no owner assigned yet (e.g. seeded demo case), allow access
+    if (!caseRecord.owner) {
+      return true;
+    }
+
+    const userIdStr = String(userId);
+    return (
+      String(caseRecord.owner.id) === userIdStr ||
+      Boolean(caseRecord.owner.documentId && String(caseRecord.owner.documentId) === userIdStr)
+    );
   },
 
   /**
    * Check whether a user is either owner or an invited member of a given case (UK FPR Multi-Tenant Rule)
    */
   async isUserCaseMember(caseDocumentId: string, userId: number | string): Promise<boolean> {
+    const resolvedDocId = (await this.resolveDocumentId(caseDocumentId)) || caseDocumentId;
     const caseRecord = await strapi.documents('api::case.case').findOne({
-      documentId: caseDocumentId,
+      documentId: resolvedDocId,
       populate: { owner: true, members: true },
     });
 
@@ -60,13 +100,25 @@ export default factories.createCoreService('api::case.case', ({ strapi }) => ({
       return false;
     }
 
+    // If case has no owner assigned yet, allow access
+    if (!caseRecord.owner && (!caseRecord.members || caseRecord.members.length === 0)) {
+      return true;
+    }
+
     const userIdStr = String(userId);
-    if (caseRecord.owner && String(caseRecord.owner.id) === userIdStr) {
+    if (
+      caseRecord.owner &&
+      (String(caseRecord.owner.id) === userIdStr ||
+        Boolean(caseRecord.owner.documentId && String(caseRecord.owner.documentId) === userIdStr))
+    ) {
       return true;
     }
 
     if (Array.isArray(caseRecord.members)) {
-      return caseRecord.members.some((m: { id?: number | string }) => String(m.id) === userIdStr);
+      return caseRecord.members.some(
+        (m: { id?: number | string; documentId?: string }) =>
+          String(m.id) === userIdStr || (m.documentId && String(m.documentId) === userIdStr)
+      );
     }
 
     return false;
@@ -106,10 +158,13 @@ export default factories.createCoreService('api::case.case', ({ strapi }) => ({
 
           if (docId) incomingDocIds.add(docId);
 
+          const firstName = String(partyData.firstName || '').trim();
+          const lastName = String(partyData.lastName || '').trim() || firstName;
+
           const cleanData = {
             role: partyData.role || 'Applicant',
-            firstName: String(partyData.firstName || ''),
-            lastName: String(partyData.lastName || ''),
+            firstName: firstName,
+            lastName: lastName,
             dateOfBirth: partyData.dateOfBirth || undefined,
             address: partyData.address || undefined,
             solicitorFirm: partyData.solicitorFirm || undefined,

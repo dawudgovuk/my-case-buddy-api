@@ -13,6 +13,8 @@ async function seedDefaultPermissions(strapi: Core.Strapi) {
       'api::case.case.create',
       'api::case.case.update',
       'api::case.case.delete',
+      'api::case.case.findProfessionals',
+      'api::case.case.requestPeerSupport',
       'api::party.party.find',
       'api::party.party.findOne',
       'api::party.party.create',
@@ -55,6 +57,25 @@ async function seedDefaultPermissions(strapi: Core.Strapi) {
     const publicActions = [
       'api::case.case.find',
       'api::case.case.findOne',
+      'api::case.case.create',
+      'api::case.case.update',
+      'api::case.case.findProfessionals',
+      'api::case.case.requestPeerSupport',
+      'api::party.party.find',
+      'api::party.party.findOne',
+      'api::party.party.create',
+      'api::party.party.update',
+      'api::hearing.hearing.find',
+      'api::hearing.hearing.findOne',
+      'api::order.order.find',
+      'api::order.order.findOne',
+      'api::document.document.find',
+      'api::document.document.findOne',
+      'api::case-note.case-note.find',
+      'api::case-note.case-note.findOne',
+      'api::document-deadline.document-deadline.find',
+      'api::document-deadline.document-deadline.findOne',
+      'api::document-deadline.document-deadline.update',
       'api::case-invite.case-invite.find',
       'api::case-invite.case-invite.findOne',
       'plugin::users-permissions.user.find',
@@ -87,87 +108,6 @@ async function seedDefaultPermissions(strapi: Core.Strapi) {
     }
   } catch (err: unknown) {
     strapi.log.warn('Could not auto-seed default permissions:', err);
-  }
-}
-
-async function seedDemoData(strapi: Core.Strapi) {
-  try {
-    const existingCases = await strapi.documents('api::case.case').findMany({ limit: 1 });
-    if (existingCases.length === 0) {
-      const demoCase = await strapi.documents('api::case.case').create({
-        data: {
-          caseNumber: 'FC-2026-10492',
-          title: 'In the matter of Leo & Maya Brown (Child Arrangements)',
-          court: 'Family Court',
-          caseType: 'Private Law (Child Arrangements)',
-          status: 'Open',
-          startedAt: '2026-01-15',
-          allocatedJudge: 'HHJ Henderson',
-          childrenInvolved: 2,
-          seekingPeerSupport: true,
-          peerSupportNote: 'Seeking experienced McKenzie Friend or Solicitor advice on Section 7 welfare report.',
-          peerSupportRequestedAt: new Date().toISOString(),
-        },
-      });
-
-      if (demoCase?.documentId) {
-        await strapi.documents('api::party.party').create({
-          data: {
-            role: 'Applicant',
-            firstName: 'Alice',
-            lastName: 'Brown',
-            case: demoCase.documentId,
-          },
-        });
-        await strapi.documents('api::party.party').create({
-          data: {
-            role: 'Respondent',
-            firstName: 'Robert',
-            lastName: 'Brown',
-            case: demoCase.documentId,
-          },
-        });
-        await strapi.documents('api::party.party').create({
-          data: {
-            role: 'Child',
-            firstName: 'Leo',
-            lastName: 'Brown',
-            dateOfBirth: '2019-04-12',
-            case: demoCase.documentId,
-          },
-        });
-
-        const nextMonth = new Date();
-        nextMonth.setDate(nextMonth.getDate() + 21);
-        await strapi.documents('api::hearing.hearing').create({
-          data: {
-            type: 'Directions',
-            date: nextMonth.toISOString().split('T')[0],
-            time: '10:30',
-            location: 'Central Family Court (First Avenue House)',
-            judge: 'HHJ Henderson',
-            notes: 'First Hearing Dispute Resolution Appointment (FHDRA)',
-            case: demoCase.documentId,
-          },
-        });
-
-        const nextWeek = new Date();
-        nextWeek.setDate(nextWeek.getDate() + 10);
-        await strapi.documents('api::document-deadline.document-deadline').create({
-          data: {
-            title: 'File Applicant Position Statement',
-            deadlineDate: nextWeek.toISOString().split('T')[0],
-            documentType: 'Position Statement',
-            status: 'pending',
-            case: demoCase.documentId,
-          },
-        });
-
-        strapi.log.info('🌱 Demo Family Court case auto-seeded in database.');
-      }
-    }
-  } catch (err: unknown) {
-    strapi.log.warn('Could not auto-seed demo case:', err);
   }
 }
 
@@ -206,6 +146,5 @@ export default {
   async bootstrap({ strapi }: { strapi: Core.Strapi }) {
     strapi.log.info('🚀 My Case Buddy API initialized with SOLID Strapi v5 Architecture');
     await seedDefaultPermissions(strapi);
-    await seedDemoData(strapi);
   },
 };

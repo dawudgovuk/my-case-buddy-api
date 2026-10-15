@@ -1255,6 +1255,7 @@ export interface PluginUsersPermissionsUser
     draftAndPublish: false;
   };
   attributes: {
+    bio: Schema.Attribute.Text;
     blocked: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     clerkId: Schema.Attribute.String & Schema.Attribute.Unique;
     confirmationToken: Schema.Attribute.String & Schema.Attribute.Private;
@@ -1274,6 +1275,7 @@ export interface PluginUsersPermissionsUser
       'plugin::users-permissions.user'
     > &
       Schema.Attribute.Private;
+    name: Schema.Attribute.String;
     password: Schema.Attribute.Password &
       Schema.Attribute.Private &
       Schema.Attribute.SetMinMaxLength<{
@@ -1287,6 +1289,7 @@ export interface PluginUsersPermissionsUser
       'manyToOne',
       'plugin::users-permissions.role'
     >;
+    specialisms: Schema.Attribute.JSON;
     subscriptionStatus: Schema.Attribute.String &
       Schema.Attribute.DefaultTo<'active'>;
     subscriptionTier: Schema.Attribute.Enumeration<
@@ -1306,6 +1309,7 @@ export interface PluginUsersPermissionsUser
       ['LIP', 'McKenzieFriend', 'Solicitor', 'Barrister']
     > &
       Schema.Attribute.DefaultTo<'LIP'>;
+    yearsExperience: Schema.Attribute.Integer;
   };
 }
 
