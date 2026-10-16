@@ -97,6 +97,18 @@
         "Barrister"
       ],
       "default": "LIP"
+    },
+    "name": {
+      "type": "string"
+    },
+    "bio": {
+      "type": "text"
+    },
+    "specialisms": {
+      "type": "json"
+    },
+    "yearsExperience": {
+      "type": "integer"
     }
   }
 }

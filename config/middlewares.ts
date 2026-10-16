@@ -4,7 +4,19 @@ const config: Core.Config.Middlewares = [
   'strapi::logger',
   'strapi::errors',
   'strapi::security',
-  'strapi::cors',
+  {
+    name: 'strapi::cors',
+    config: {
+      headers: [
+        'Content-Type',
+        'Authorization',
+        'Origin',
+        'Accept',
+        'X-User-Email',
+        'x-user-email',
+      ],
+    },
+  },
   'strapi::poweredBy',
   'strapi::query',
   'strapi::body',

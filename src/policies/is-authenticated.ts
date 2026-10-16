@@ -1,4 +1,3 @@
-import type { Core } from '@strapi/strapi';
 import { errors } from '@strapi/utils';
 
 const { UnauthorizedError } = errors;

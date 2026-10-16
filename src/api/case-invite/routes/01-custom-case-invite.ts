@@ -3,7 +3,7 @@ export default {
     {
       method: 'POST',
       path: '/case-invites/accept',
-      handler: 'api::case-invite.case-invite.accept',
+      handler: 'case-invite.accept',
       config: {
         policies: [],
       },

@@ -34,8 +34,8 @@ const isCaseMemberPolicy = async (
     return true;
   }
 
-  const isOwner = await strapi.service('api::case.case').isUserCaseOwner(documentId, user.id);
-  if (isOwner) {
+  const isMember = await strapi.service('api::case.case').isUserCaseMember(documentId, user.id);
+  if (isMember) {
     return true;
   }
 

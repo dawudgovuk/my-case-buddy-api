@@ -26,3 +26,13 @@ trigger: always_on
 
 5. **Draft & Publish Policy**:
    - For transactional records (`cases`, `orders`, `hearings`, `deadlines`), set `"draftAndPublish": false` in `schema.json` to prevent confusion between draft and published records in CRUD operations.
+
+6. **Mandatory Schema Migration Protocol**:
+   - **Zero Ad-Hoc Modifications**: ANY database change (schemas, tables, columns, indexes, foreign keys, or link tables) MUST be committed as a versioned migration script in `database/migrations/`. Manual SQL edits on production/staging are strictly prohibited.
+   - **Standardized File Format**: Files must follow `YYYY.MM.DD.HH.MM.SS.<description>.js` exporting both `up(ctx)` (apply) and `down(ctx)` (rollback).
+   - **Direct Connection for DDL**: All migrations must use direct unpooled connections (`DATABASE_URL_UNPOOLED`) to guarantee ACID DDL transaction locks.
+   - **CLI Tooling**:
+     - `npm run db:migrate`: Executes all pending migrations in a batch transaction.
+     - `npm run db:migrate:status`: Displays interactive tabular status of applied and pending migrations.
+     - `npm run db:migrate:rollback`: Reverts the latest migration batch safely.
+     - `npm run db:migrate:create <name>`: Automatically scaffolds a timestamped boilerplate migration.

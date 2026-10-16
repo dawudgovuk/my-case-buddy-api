@@ -32,7 +32,15 @@ export default factories.createCoreController('api::case-invite.case-invite', ({
    * Custom endpoint: POST /api/case-invites/accept
    */
   async accept(ctx) {
-    const user = ctx.state.user;
+    let user = ctx.state.user;
+    const candidateEmail = ctx.request.headers['x-user-email'] as string | undefined;
+    if (!user && candidateEmail) {
+      const email = candidateEmail.toLowerCase().trim();
+      user = await strapi.db.query('plugin::users-permissions.user').findOne({
+        where: { email },
+      });
+    }
+
     if (!user) {
       return ctx.unauthorized('Authentication required to accept an invite');
     }
