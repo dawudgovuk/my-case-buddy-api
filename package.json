@@ -5,6 +5,11 @@
   "description": "A Strapi application",
   "scripts": {
     "database:verify": "node scripts/test-neon.js",
+    "db:clean": "node scripts/clean-db.js",
+    "db:fresh": "node scripts/clean-db.js",
+    "db:clean-users": "node scripts/clean-users.js",
+    "db:seed": "node scripts/seed-db.js",
+    "db:reset": "node scripts/clean-db.js && node scripts/seed-db.js",
     "build": "strapi build",
     "console": "strapi console",
     "deploy": "strapi deploy",

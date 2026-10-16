@@ -18,8 +18,41 @@ function buildConfirmationHtml(params: {
   roleDisplayName: string;
   referenceId: string;
   nowFormatted: string;
+  isLIP?: boolean;
 }): string {
-  const { name, email, roleDisplayName, referenceId, nowFormatted } = params;
+  const { name, email, roleDisplayName, referenceId, nowFormatted, isLIP } = params;
+
+  const guidanceTitle = isLIP
+    ? '📜 Litigant in Person Guidance & Rights (HMCTS Family Court)'
+    : '📜 McKenzie Friend Practice Guidance (July 2010)';
+
+  const permittedList = isLIP
+    ? [
+        'Direct access to create and manage Family Court cases (Child Arrangements, Section 7 reports).',
+        'Right to seek moral support and procedural reassurance from a McKenzie Friend.',
+        'Compiling digital court bundles, chronological timelines, and position statements.',
+        'Self-representing in court and directly addressing the bench during hearings.',
+      ]
+    : [
+        'Providing moral support, encouragement, and calm reassurance to the litigant.',
+        'Taking comprehensive in-court notes of evidence, submissions, and judge\'s directions.',
+        'Quietly advising on procedural issues, practical questions, and witness examination.',
+        'Assisting in organizing and managing the digital and paper trial bundles.',
+      ];
+
+  const prohibitedList = isLIP
+    ? [
+        'Must maintain strict confidentiality of all private family proceedings (FPR Rule 12.73).',
+        'Cannot disclose child details or court documents to unauthorized third parties or social media.',
+        'Cannot record hearings or court sessions without express judicial permission.',
+        'Must comply with court-mandated filing deadlines and procedural directions.',
+      ]
+    : [
+        'Cannot address the court directly or examine witnesses without special judicial leave.',
+        'Cannot sign court pleadings, witness statements, or legal forms for the litigant.',
+        'Cannot act as an authorized legal representative conducting litigation.',
+        'Must maintain strict confidentiality of all private family proceedings (FPR Rule 12.73).',
+      ];
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -108,11 +141,11 @@ function buildConfirmationHtml(params: {
                 </tr>
               </table>
 
-              <!-- Practice Guidance Box (FPR July 2010) -->
+              <!-- Guidance Box -->
               <div style="border: 1px solid #cbd5e1; border-radius: 10px; overflow: hidden; margin-bottom: 28px;">
                 <div style="background-color: #f1f5f9; padding: 12px 18px; border-bottom: 1px solid #cbd5e1;">
                   <strong style="color: #1e293b; font-size: 14px;">
-                    📜 McKenzie Friend Practice Guidance (July 2010)
+                    ${guidanceTitle}
                   </strong>
                 </div>
                 <div style="padding: 16px 18px;">
@@ -120,26 +153,20 @@ function buildConfirmationHtml(params: {
                   <!-- Permitted Section -->
                   <div style="margin-bottom: 14px;">
                     <div style="color: #059669; font-weight: 700; font-size: 13px; margin-bottom: 6px;">
-                      ✓ Permitted Assistance:
+                      ${isLIP ? '✓ Your Rights & Capabilities:' : '✓ Permitted Assistance:'}
                     </div>
                     <ul style="margin: 0; padding-left: 20px; color: #475569; font-size: 13px; line-height: 1.55;">
-                      <li>Providing moral support, encouragement, and calm reassurance to the litigant.</li>
-                      <li>Taking comprehensive in-court notes of evidence, submissions, and judge's directions.</li>
-                      <li>Quietly advising on procedural issues, practical questions, and witness examination.</li>
-                      <li>Assisting in organizing and managing the digital and paper trial bundles.</li>
+                      ${permittedList.map((item) => `<li>${item}</li>`).join('\n                      ')}
                     </ul>
                   </div>
 
                   <!-- Prohibited Section -->
                   <div>
                     <div style="color: #dc2626; font-weight: 700; font-size: 13px; margin-bottom: 6px;">
-                      ✕ Prohibited Activities:
+                      ${isLIP ? '✕ Legal Restrictions & Safeguarding Rules:' : '✕ Prohibited Activities:'}
                     </div>
                     <ul style="margin: 0; padding-left: 20px; color: #475569; font-size: 13px; line-height: 1.55;">
-                      <li>Cannot address the court directly or examine witnesses without special judicial leave.</li>
-                      <li>Cannot sign court pleadings, witness statements, or legal forms for the litigant.</li>
-                      <li>Cannot act as an authorized legal representative conducting litigation.</li>
-                      <li>Must maintain strict confidentiality of all private family proceedings (FPR Rule 12.73).</li>
+                      ${prohibitedList.map((item) => `<li>${item}</li>`).join('\n                      ')}
                     </ul>
                   </div>
 
@@ -154,7 +181,7 @@ function buildConfirmationHtml(params: {
                       Next Step: Verify Your Email Address
                     </div>
                     <p style="color: #3b82f6; font-size: 13px; line-height: 1.5; margin: 0;">
-                      Under UK Family Court child safeguarding regulations, your peer access remains restricted until you click the activation link in the <strong>Verification Email</strong> sent simultaneously to this inbox.
+                      Under UK Family Court child safeguarding regulations, your account profile requires email confirmation. Please click the activation link in the <strong>Verification Email</strong> sent simultaneously to this inbox.
                     </p>
                   </td>
                 </tr>
@@ -193,8 +220,21 @@ function buildVerificationHtml(params: {
   referenceId: string;
   token: string;
   verificationUrl: string;
+  isLIP?: boolean;
 }): string {
-  const { name, email, roleDisplayName, referenceId, token, verificationUrl } = params;
+  const { name, email, roleDisplayName, referenceId, token, verificationUrl, isLIP } = params;
+
+  const nextSteps = isLIP
+    ? [
+        'Your profile will be upgraded to <strong>Verified Litigant in Person</strong>.',
+        'You can create and manage child arrangement cases, timelines, and court filings.',
+        'You can invite verified McKenzie Friends for peer support and bundle organization.',
+      ]
+    : [
+        `Your profile will be upgraded to <strong>Verified ${roleDisplayName}</strong>.`,
+        'You will gain access to browse open peer support requests from Litigants in Person.',
+        'You can view case milestones, court directions, and collaborative bundles.',
+      ];
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -221,7 +261,7 @@ function buildVerificationHtml(params: {
                     </div>
                     <h1 style="color: #ffffff; margin: 0 0 6px 0; font-size: 24px; font-weight: 700; letter-spacing: -0.5px;">Safeguarding Clearance</h1>
                     <div style="color: #a7f3d0; font-size: 13px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase;">
-                      UK Family Court Peer Supporter Verification
+                      ${isLIP ? 'HMCTS Family Court User Verification' : 'UK Family Court Peer Supporter Verification'}
                     </div>
                   </td>
                 </tr>
@@ -247,7 +287,11 @@ function buildVerificationHtml(params: {
                       Dear <strong>${name}</strong>,
                     </p>
                     <p style="color: #475569; font-size: 15px; line-height: 1.6; margin: 0;">
-                      In compliance with <strong>UK Family Procedure Rules (FPR Part 12)</strong> and <strong>UK GDPR child safeguarding regulations</strong>, all McKenzie Friends and legal supporters must confirm their email before accessing proceedings or offering assistance to Litigants in Person.
+                      ${
+                        isLIP
+                          ? 'In compliance with <strong>UK Family Procedure Rules (FPR Part 12)</strong> and <strong>UK GDPR child safeguarding regulations</strong>, all Litigants in Person must confirm their email before creating family court cases or requesting assistance from McKenzie Friends.'
+                          : 'In compliance with <strong>UK Family Procedure Rules (FPR Part 12)</strong> and <strong>UK GDPR child safeguarding regulations</strong>, all McKenzie Friends and legal supporters must confirm their email before accessing proceedings or offering assistance to Litigants in Person.'
+                      }
                     </p>
                   </td>
                 </tr>
@@ -284,9 +328,7 @@ function buildVerificationHtml(params: {
                   What happens once you verify?
                 </div>
                 <ol style="margin: 0; padding-left: 20px; color: #581c87; font-size: 13px; line-height: 1.55;">
-                  <li>Your profile will be upgraded to <strong>Verified ${roleDisplayName}</strong>.</li>
-                  <li>You will gain access to browse open peer support requests from Litigants in Person.</li>
-                  <li>You can view case milestones, court directions, and collaborative bundles.</li>
+                  ${nextSteps.map((step) => `<li>${step}</li>`).join('\n                  ')}
                 </ol>
               </div>
 
@@ -326,19 +368,21 @@ function buildVerificationHtml(params: {
 export default ({ strapi }: { strapi: Core.Strapi }) => ({
   /**
    * Dispatches both Registration Confirmation and Verification Emails
-   * when a user registers (especially McKenzie Friends or legal professionals).
+   * when any user registers (LIP, McKenzie Friends, or legal professionals).
    */
   async sendRegistrationEmails(ctx: any) {
     try {
       const body = ctx.request.body as SendRegistrationEmailsPayload;
-      const { name, email, role = 'McKenzieFriend', token, verificationUrl, referenceId } = body || {};
+      const { name, email, role = 'LIP', token, verificationUrl, referenceId } = body || {};
 
       if (!name || !email) {
         return ctx.badRequest('Missing required fields: name and email are mandatory');
       }
 
-      const generatedRefId = referenceId || `MF-REG-${Date.now().toString(36).toUpperCase()}`;
-      const roleDisplayName = role === 'McKenzieFriend' ? 'McKenzie Friend' : role;
+      const isLIP = role === 'LIP';
+      const rolePrefix = isLIP ? 'LIP-REG' : 'MF-REG';
+      const generatedRefId = referenceId || `${rolePrefix}-${Date.now().toString(36).toUpperCase()}`;
+      const roleDisplayName = role === 'McKenzieFriend' ? 'McKenzie Friend' : role === 'LIP' ? 'Litigant in Person' : role;
       const now = new Date();
       const nowFormatted = now.toUTCString();
       const resolvedToken = token || `verify_${Date.now().toString(36)}`;
@@ -352,6 +396,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         roleDisplayName,
         referenceId: generatedRefId,
         nowFormatted,
+        isLIP,
       });
 
       const verificationHtml = buildVerificationHtml({
@@ -361,6 +406,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         referenceId: generatedRefId,
         token: resolvedToken,
         verificationUrl: resolvedVerificationUrl,
+        isLIP,
       });
 
       // 1. Build Confirmation Email Object
@@ -376,7 +422,9 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         status: 'delivered',
         referenceId: generatedRefId,
         previewText: `Welcome to My Case Buddy! Your registration as a ${roleDisplayName} has been officially received.`,
-        bodyText: `Dear ${name},\n\nThank you for registering as a ${roleDisplayName} with My Case Buddy (Reference: ${generatedRefId}).\n\nUnder UK Family Procedure Rules (FPR) and Practice Guidance on McKenzie Friends (July 2010), your remit includes providing moral support, taking notes, and quietly advising the litigant.\n\nA separate Verification Email has also been dispatched to your inbox. Please click the verification link to activate your safeguarding clearance.\n\nWarm regards,\nThe My Case Buddy Team`,
+        bodyText: isLIP
+          ? `Dear ${name},\n\nThank you for registering as a Litigant in Person with My Case Buddy (Reference: ${generatedRefId}).\n\nYour profile has been created to help you manage Family Court proceedings, child arrangements, and hearings.\n\nA separate Verification Email has also been dispatched to your inbox. Please click the verification link to activate your account.\n\nWarm regards,\nThe My Case Buddy Team`
+          : `Dear ${name},\n\nThank you for registering as a ${roleDisplayName} with My Case Buddy (Reference: ${generatedRefId}).\n\nUnder UK Family Procedure Rules (FPR) and Practice Guidance on McKenzie Friends (July 2010), your remit includes providing moral support, taking notes, and quietly advising the litigant.\n\nA separate Verification Email has also been dispatched to your inbox. Please click the verification link to activate your safeguarding clearance.\n\nWarm regards,\nThe My Case Buddy Team`,
         html: confirmationHtml,
       };
 
@@ -395,7 +443,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
         verificationToken: resolvedToken,
         verificationUrl: resolvedVerificationUrl,
         previewText: `Action Required: Confirm your email address to activate your ${roleDisplayName} profile.`,
-        bodyText: `Dear ${name},\n\nPlease confirm your email address to activate your ${roleDisplayName} credentials on My Case Buddy.\n\nVerify Link: ${resolvedVerificationUrl}\n\nThis verification link expires in 24 hours.\n\nRegards,\nSafeguarding & Governance Office`,
+        bodyText: `Dear ${name},\n\nPlease confirm your email address to activate your ${roleDisplayName} profile on My Case Buddy.\n\nVerify Link: ${resolvedVerificationUrl}\n\nThis verification link expires in 24 hours.\n\nRegards,\nSafeguarding & Governance Office`,
         html: verificationHtml,
       };
 
@@ -407,8 +455,13 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
       try {
         const emailService = strapi.plugin('email')?.service('email');
         if (emailService) {
+          const fromEmail = process.env.DEFAULT_FROM_EMAIL || process.env.SMTP_USERNAME || 'aliparvez20@gmail.com';
+          const sender = `"My Case Buddy" <${fromEmail}>`;
+
           // 1. Send live Confirmation Email with rich HTML
           await emailService.send({
+            from: sender,
+            replyTo: fromEmail,
             to: email,
             subject: confirmationEmail.subject,
             text: confirmationEmail.bodyText,
@@ -417,6 +470,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
 
           // 2. Send live Verification Email with rich HTML
           await emailService.send({
+            from: sender,
+            replyTo: fromEmail,
             to: email,
             subject: verificationEmail.subject,
             text: verificationEmail.bodyText,
