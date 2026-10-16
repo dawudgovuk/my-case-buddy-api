@@ -34,6 +34,9 @@ Adopt the appropriate persona based on the current architectural stage:
 - **Environment & Database Hygiene**:
   - Environment variables must be validated via `env()` helpers in `config/`.
   - Dual database support: SQLite for rapid local testing (`.tmp/data.db`) and PostgreSQL for production / staging via Neon serverless connection strings.
+- **Mandatory Database Migration Directive**:
+  - ANY database change (schemas, tables, columns, indexes, foreign keys, or link tables) MUST be accompanied by a versioned migration file in `database/migrations/`.
+  - Zero ad-hoc DDL on live databases. Always test migrations with `npm run db:migrate` and `npm run db:migrate:status`.
 - **Verification Gate**:
   - After making code changes, always run `npm run build` to verify clean TypeScript compilation and admin bundling.
 

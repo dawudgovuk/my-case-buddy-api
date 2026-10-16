@@ -16,5 +16,13 @@ export default {
         policies: [],
       },
     },
+    {
+      method: 'POST',
+      path: '/cases/:id/accept-peer-support',
+      handler: 'case.acceptPeerSupport',
+      config: {
+        policies: [],
+      },
+    },
   ],
 };

@@ -5,7 +5,16 @@ export default factories.createCoreService('api::case.case', ({ strapi }) => ({
    * Find cases accessible to a specific user (SOLID - SRP & DIP)
    * Restricts results to cases where the user is owner or an authorized collaborator/member.
    */
-  async findForUser(userId: number | string, queryParams: Record<string, unknown> = {}) {
+  /**
+   * Find cases accessible to a specific user (SOLID - SRP & DIP)
+   * Restricts results to cases where the user is owner or an authorized collaborator/member,
+   * plus cases seeking peer support if the user is a verified legal professional.
+   */
+  async findForUser(
+    userId: number | string,
+    queryParams: Record<string, unknown> = {},
+    userRecord?: { userRole?: string }
+  ) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const populateConfig = (queryParams.populate as any) || {
       parties: true,
@@ -19,14 +28,46 @@ export default factories.createCoreService('api::case.case', ({ strapi }) => ({
       invites: true,
     };
 
+    let userRole = userRecord?.userRole;
+    if (!userRole) {
+      const isNumId = !isNaN(Number(userId));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const u: any = await strapi.db.query('plugin::users-permissions.user').findOne({
+        where: isNumId ? { id: Number(userId) } : { documentId: String(userId) },
+      });
+      userRole = u?.userRole;
+    }
+
+    const isProfessional = ['McKenzieFriend', 'Solicitor', 'Barrister'].includes(userRole || '');
+
+    const isNum = !isNaN(Number(userId));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const orFilters: any[] = [
+      { owner: { documentId: { $eq: String(userId) } } },
+      ...(isNum ? [{ owner: { id: { $eq: Number(userId) } } }] : []),
+      { members: { documentId: { $eq: String(userId) } } },
+      ...(isNum ? [{ members: { id: { $eq: Number(userId) } } }] : []),
+    ];
+
+    if (isProfessional) {
+      orFilters.push({ seekingPeerSupport: { $eq: true } });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { filters: extraFilters, ...restParams } = queryParams as any;
+
     return strapi.documents('api::case.case').findMany({
-      ...queryParams,
-      filters: {
-        $or: [
-          { owner: { id: { $eq: userId } } },
-          { members: { id: { $eq: userId } } },
-        ],
-      },
+      ...restParams,
+      filters: extraFilters
+        ? {
+            $and: [
+              extraFilters,
+              { $or: orFilters },
+            ],
+          }
+        : {
+            $or: orFilters,
+          },
       populate: populateConfig,
     });
   },
@@ -103,6 +144,18 @@ export default factories.createCoreService('api::case.case', ({ strapi }) => ({
     // If case has no owner assigned yet, allow access
     if (!caseRecord.owner && (!caseRecord.members || caseRecord.members.length === 0)) {
       return true;
+    }
+
+    // If case is actively seeking peer support, allow legal supporters to view
+    if (caseRecord.seekingPeerSupport) {
+      const isNumId = !isNaN(Number(userId));
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const u: any = await strapi.db.query('plugin::users-permissions.user').findOne({
+        where: isNumId ? { id: Number(userId) } : { documentId: String(userId) },
+      });
+      if (['McKenzieFriend', 'Solicitor', 'Barrister'].includes(u?.userRole || '')) {
+        return true;
+      }
     }
 
     const userIdStr = String(userId);

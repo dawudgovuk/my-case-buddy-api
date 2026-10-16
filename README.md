@@ -63,9 +63,23 @@ Feel free to check out the [Strapi GitHub repository](https://github.com/strapi/
 
 
 
-## 🗄️ Database Management Scripts
+## 🗄️ Database Management & Migration Scripts
+
+> **MANDATORY POLICY**: Any database schema change (tables, columns, indexes, foreign keys, or link tables) requires a versioned migration in `database/migrations/`. See [System Architecture & Workflow Manual](../docs/SYSTEM_ARCHITECTURE_AND_WORKFLOW.md).
 
 ```bash
+# Check status of migrations (shows APPLIED vs PENDING)
+npm run db:migrate:status
+
+# Apply all pending migrations in an ACID transaction
+npm run db:migrate
+
+# Rollback latest migration batch
+npm run db:migrate:rollback
+
+# Scaffold a new timestamped migration file
+npm run db:migrate:create <migration_name>
+
 # Clean database to fresh production state (clears all users, sessions, and case data)
 npm run db:fresh
 # or
