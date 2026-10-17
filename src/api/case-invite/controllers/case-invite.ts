@@ -1,56 +1,34 @@
 import { factories } from '@strapi/strapi';
 import crypto from 'crypto';
+import { RequestUserResolver } from '../../../lib/users/request-user-resolver';
+import { UserRepository } from '../../../lib/users/user-repository';
+import { inviteExpiry } from '../services/case-invite';
 
-export default factories.createCoreController('api::case-invite.case-invite', ({ strapi }) => ({
-  /**
-   * Automatically generate UUID token and expiration on create if not provided
-   */
-  async create(ctx) {
-    const user = ctx.state.user;
+export default factories.createCoreController('api::case-invite.case-invite', ({ strapi }) => {
+  const resolver = new RequestUserResolver(new UserRepository(strapi));
 
-    if (ctx.request.body && typeof ctx.request.body === 'object') {
-      const body = ctx.request.body as { data?: Record<string, unknown> };
-      if (body.data) {
-        if (!body.data.token) {
-          body.data.token = crypto.randomUUID();
-        }
-        if (!body.data.expiresAt) {
-          const expiresAt = new Date();
-          expiresAt.setDate(expiresAt.getDate() + 30);
-          body.data.expiresAt = expiresAt.toISOString();
-        }
-        if (user && !body.data.createdBy) {
-          body.data.createdBy = user.id;
-        }
+  return {
+    /** Fills in a random token, a 30-day expiry and the creator when the client omits them. */
+    async create(ctx) {
+      const body = ctx.request.body as { data?: Record<string, unknown> } | undefined;
+      const data = body && typeof body === 'object' ? body.data : undefined;
+      if (data) {
+        data.token ||= crypto.randomUUID();
+        data.expiresAt ||= inviteExpiry();
+        if (ctx.state.user && !data.createdBy) data.createdBy = ctx.state.user.id;
       }
-    }
+      return super.create(ctx);
+    },
 
-    return super.create(ctx);
-  },
+    /** POST /api/case-invites/accept */
+    async accept(ctx) {
+      const user = await resolver.resolve(ctx);
+      if (!user) return ctx.unauthorized('Authentication required to accept an invite');
 
-  /**
-   * Custom endpoint: POST /api/case-invites/accept
-   */
-  async accept(ctx) {
-    let user = ctx.state.user;
-    const candidateEmail = ctx.request.headers['x-user-email'] as string | undefined;
-    if (!user && candidateEmail) {
-      const email = candidateEmail.toLowerCase().trim();
-      user = await strapi.db.query('plugin::users-permissions.user').findOne({
-        where: { email },
-      });
-    }
+      const { token } = (ctx.request.body as { token?: string }) || {};
+      if (!token) return ctx.badRequest('Missing invite token in request body');
 
-    if (!user) {
-      return ctx.unauthorized('Authentication required to accept an invite');
-    }
-
-    const { token } = (ctx.request.body as { token?: string }) || {};
-    if (!token) {
-      return ctx.badRequest('Missing invite token in request body');
-    }
-
-    const result = await strapi.service('api::case-invite.case-invite').acceptInvite(token, user.id);
-    return ctx.send(result);
-  },
-}));
+      return ctx.send(await strapi.service('api::case-invite.case-invite').acceptInvite(token, user.id));
+    },
+  };
+});

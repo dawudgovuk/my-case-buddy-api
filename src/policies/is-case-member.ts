@@ -1,15 +1,11 @@
 import type { Core } from '@strapi/strapi';
 import { errors } from '@strapi/utils';
+import { isAdmin, type AppUser } from '../lib/domain/models';
 
 const { UnauthorizedError, ForbiddenError } = errors;
 
-interface PolicyUser {
-  id: number | string;
-  role?: { type?: string };
-}
-
 interface CustomPolicyContext {
-  state?: { user?: PolicyUser };
+  state?: { user?: AppUser };
   params?: Record<string, string>;
 }
 
@@ -25,7 +21,7 @@ const isCaseMemberPolicy = async (
   }
 
   // Admin users bypass case-level restrictions
-  if (user.role?.type === 'admin') {
+  if (isAdmin(user)) {
     return true;
   }
 
