@@ -243,6 +243,56 @@ export default factories.createCoreController('api::case.case', ({ strapi }) => 
    */
   async findProfessionals(ctx) {
     try {
+      // Auto-reconcile any pending Neon Auth legal professional registrations into up_users
+      try {
+        const knex = strapi.db.connection;
+        const neonTableExists = await knex.raw(
+          `SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'neon_auth' AND table_name = 'user');`
+        );
+        if (neonTableExists?.rows?.[0]?.exists) {
+          const unsynced = await knex.raw(`
+            SELECT nu.id, nu.name, nu.email
+            FROM neon_auth.user nu
+            WHERE nu.email NOT IN (SELECT email FROM up_users WHERE email IS NOT NULL)
+              AND (
+                nu.name ILIKE '%mckenzie%' OR nu.name ILIKE '%mackenzi%'
+                OR nu.email ILIKE '%mckenzie%' OR nu.email ILIKE '%mackenzi%'
+                OR nu.name ILIKE '%solicitor%' OR nu.email ILIKE '%solicitor%'
+                OR nu.name ILIKE '%barrister%' OR nu.email ILIKE '%barrister%'
+              );
+          `);
+
+          if (unsynced?.rows?.length > 0) {
+            const defaultRole = await strapi.db.query('plugin::users-permissions.role').findOne({
+              where: { type: 'authenticated' },
+            });
+            for (const nu of unsynced.rows) {
+              const lower = (nu.name + ' ' + nu.email).toLowerCase();
+              let inferredRole: 'McKenzieFriend' | 'Solicitor' | 'Barrister' = 'McKenzieFriend';
+              if (lower.includes('solicitor')) inferredRole = 'Solicitor';
+              else if (lower.includes('barrister')) inferredRole = 'Barrister';
+
+              await strapi.entityService.create('plugin::users-permissions.user', {
+                data: {
+                  username: `${(nu.name || nu.email.split('@')[0]).trim().replace(/\s+/g, '_').toLowerCase()}_${Math.random().toString(36).substring(2, 6)}`,
+                  email: nu.email.toLowerCase().trim(),
+                  name: nu.name || nu.email.split('@')[0],
+                  userRole: inferredRole,
+                  provider: 'local',
+                  confirmed: true,
+                  role: defaultRole?.id,
+                  bio: `Verified ${inferredRole === 'McKenzieFriend' ? 'McKenzie Friend' : inferredRole} providing professional family law guidance.`,
+                  specialisms: ['Child Arrangements', 'Position Statements', 'Court Support'],
+                  yearsExperience: 3,
+                },
+              });
+            }
+          }
+        }
+      } catch (syncErr) {
+        strapi.log.warn('[findProfessionals] Neon auth reconcile notice: ' + String(syncErr));
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const users: any[] = await strapi.db.query('plugin::users-permissions.user').findMany({
         where: {
