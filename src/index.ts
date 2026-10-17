@@ -4,8 +4,15 @@ async function seedDefaultPermissions(strapi: Core.Strapi) {
   try {
     const roles = await strapi.db.query('plugin::users-permissions.role').findMany();
 
-    const authenticatedRole = roles?.find((r: { type: string }) => r.type === 'authenticated');
-    const publicRole = roles?.find((r: { type: string }) => r.type === 'public');
+    const seededCount = await strapi.db
+      .connection('up_permissions_role_lnk')
+      .count('* as count')
+      .first();
+
+    if (Number(seededCount?.count || 0) >= 30) {
+      strapi.log.info('✅ Permissions already fully configured');
+      return;
+    }
 
     const authenticatedActions = [
       'api::case.case.find',
@@ -84,30 +91,49 @@ async function seedDefaultPermissions(strapi: Core.Strapi) {
       'plugin::users-permissions.user.find',
     ];
 
-    if (authenticatedRole) {
-      for (const action of authenticatedActions) {
-        const existing = await strapi.db.query('plugin::users-permissions.permission').findOne({
-          where: { action, role: authenticatedRole.id },
-        });
-        if (!existing) {
-          await strapi.db.query('plugin::users-permissions.permission').create({
-            data: { action, role: authenticatedRole.id },
+    const seedRoleActions = async (roleType: string, actions: string[]) => {
+      const role = roles?.find((r: { type: string }) => r.type === roleType);
+      if (!role) return;
+
+      for (const action of actions) {
+        try {
+          let perm = await strapi.db.query('plugin::users-permissions.permission').findOne({
+            where: { action },
           });
+          if (!perm) {
+            perm = await strapi.db.query('plugin::users-permissions.permission').create({
+              data: { action },
+            });
+          }
+          if (perm?.id) {
+            const existingLink = await strapi.db
+              .connection('up_permissions_role_lnk')
+              .where({ permission_id: perm.id, role_id: role.id })
+              .first();
+
+            if (!existingLink) {
+              await strapi.db.connection('up_permissions_role_lnk').insert({
+                permission_id: perm.id,
+                role_id: role.id,
+                permission_ord: 1,
+              });
+            }
+          }
+        } catch (actionErr) {
+          strapi.log.debug(`Could not sync action ${action} for ${roleType}:`, actionErr);
         }
       }
+    };
+
+    const authenticatedRole = roles?.find((r: { type: string }) => r.type === 'authenticated');
+    const publicRole = roles?.find((r: { type: string }) => r.type === 'public');
+
+    if (authenticatedRole) {
+      await seedRoleActions('authenticated', authenticatedActions);
     }
 
     if (publicRole) {
-      for (const action of publicActions) {
-        const existing = await strapi.db.query('plugin::users-permissions.permission').findOne({
-          where: { action, role: publicRole.id },
-        });
-        if (!existing) {
-          await strapi.db.query('plugin::users-permissions.permission').create({
-            data: { action, role: publicRole.id },
-          });
-        }
-      }
+      await seedRoleActions('public', publicActions);
     }
   } catch (err: unknown) {
     strapi.log.warn('Could not auto-seed default permissions:', err);

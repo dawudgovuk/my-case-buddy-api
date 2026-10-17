@@ -42,9 +42,21 @@ export default factories.createCoreService('api::case.case', ({ strapi }) => ({
 
     const isNum = !isNaN(Number(userId));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let userDocId = (userRecord as any)?.documentId;
+    if (!userDocId && isNum) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const uRecord: any = await strapi.db.query('plugin::users-permissions.user').findOne({
+        where: { id: Number(userId) },
+      });
+      userDocId = uRecord?.documentId;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const orFilters: any[] = [
+      ...(userDocId ? [{ owner: { documentId: { $eq: userDocId } } }] : []),
       { owner: { documentId: { $eq: String(userId) } } },
       ...(isNum ? [{ owner: { id: { $eq: Number(userId) } } }] : []),
+      ...(userDocId ? [{ members: { documentId: { $eq: userDocId } } }] : []),
       { members: { documentId: { $eq: String(userId) } } },
       ...(isNum ? [{ members: { id: { $eq: Number(userId) } } }] : []),
     ];

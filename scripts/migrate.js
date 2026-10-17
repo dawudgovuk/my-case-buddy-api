@@ -189,9 +189,9 @@ async function up() {
         );
         await client.query(`
           INSERT INTO strapi_migrations (name, time)
-          SELECT $1, CURRENT_TIMESTAMP
+          SELECT $1::varchar, CURRENT_TIMESTAMP
           WHERE EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'strapi_migrations')
-          AND NOT EXISTS (SELECT 1 FROM strapi_migrations WHERE name = $1);
+          AND NOT EXISTS (SELECT 1 FROM strapi_migrations WHERE name = $1::varchar);
         `, [file]);
         await client.query('COMMIT');
         console.log(`  ✔ \x1b[32mSuccessfully applied ${file}\x1b[0m (${duration}ms)`);

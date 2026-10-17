@@ -1,4 +1,5 @@
 import { factories } from '@strapi/strapi';
+import { renderEmail, esc, paragraph, detailsCard, quote, button } from '../../../utils/email-layout';
 
 const FULL_POPULATE = {
   parties: true,
@@ -49,12 +50,14 @@ export default factories.createCoreController('api::case.case', ({ strapi }) => 
       user = foundUser;
     }
 
-    if (user && body?.data && !body.data.owner) {
-      body.data.owner = user.documentId || user.id;
-    }
-
     // Isolate child arrays and remove non-schema metadata so core case record creates cleanly
     const { parties, hearings, orders, documents, notes, deadlines, ownerEmail, ...coreData } = rawData;
+
+    // Preserve owner relation on coreData
+    if (user && !coreData.owner) {
+      coreData.owner = user.documentId || user.id;
+    }
+
     if (body) {
       body.data = coreData;
     }
@@ -63,6 +66,30 @@ export default factories.createCoreController('api::case.case', ({ strapi }) => 
     const docId = response?.data?.documentId;
 
     if (docId) {
+      // Ensure owner relation is securely recorded in cases_owner_lnk
+      if (user) {
+        try {
+          const caseRecord = await strapi.db.query('api::case.case').findOne({
+            where: { documentId: docId },
+          });
+          if (caseRecord?.id && user?.id) {
+            const existingLnk = await strapi.db
+              .connection('cases_owner_lnk')
+              .where({ case_id: caseRecord.id, user_id: user.id })
+              .first();
+
+            if (!existingLnk) {
+              await strapi.db.connection('cases_owner_lnk').insert({
+                case_id: caseRecord.id,
+                user_id: user.id,
+              });
+            }
+          }
+        } catch (linkErr) {
+          strapi.log.warn('Could not auto-link case owner in cases_owner_lnk:', linkErr);
+        }
+      }
+
       await strapi.service('api::case.case').syncCaseChildren(docId, {
         parties,
         hearings,
@@ -364,94 +391,33 @@ export default factories.createCoreController('api::case.case', ({ strapi }) => 
 
         // 5a. Dispatched to the Target Legal Supporter
         if (targetPro?.email) {
-          const proHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>New Peer Support Request: ${caseNumber}</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
-  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 30px 10px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 620px; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08); border: 1px solid #e2e8f0;">
-          
-          <!-- Banner -->
-          <tr>
-            <td style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #2563eb 100%); padding: 36px 30px; text-align: center;">
-              <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.18); border-radius: 50%; width: 56px; height: 56px; line-height: 56px; text-align: center; font-size: 26px; margin-bottom: 12px;">
-                🤝
-              </div>
-              <h1 style="color: #ffffff; margin: 0 0 6px 0; font-size: 22px; font-weight: 700;">Peer Support Request</h1>
-              <div style="color: #bfdbfe; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">
-                UK Family Court &bull; Practice Direction 27A
-              </div>
-            </td>
-          </tr>
-
-          <!-- Body -->
-          <tr>
-            <td style="padding: 32px;">
-              <p style="font-size: 16px; margin: 0 0 16px 0;">
-                Dear <strong>${proName}</strong>,
-              </p>
-              <p style="font-size: 15px; line-height: 1.6; color: #334155; margin: 0 0 20px 0;">
-                <strong>${lipName}</strong> (<a href="mailto:${lipEmail}" style="color: #2563eb;">${lipEmail}</a>) has selected your profile from the <strong>Verified Legal Directory</strong> to request peer-to-peer assistance on their family court case.
-              </p>
-
-              <!-- Case Details Card -->
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 24px; padding: 18px;">
-                <tr>
-                  <td>
-                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; margin-bottom: 8px;">Case Summary</div>
-                    <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">${caseTitle}</div>
-                    <div style="font-size: 13px; color: #2563eb; font-weight: 600; margin-bottom: 12px;">Ref: ${caseNumber}</div>
-                    
-                    <div style="font-size: 13px; color: #475569; line-height: 1.6;">
-                      <strong>Court:</strong> ${court}<br/>
-                      <strong>Case Type:</strong> ${caseType}<br/>
-                      <strong>Stage:</strong> ${stage}
-                    </div>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Help Note Quote -->
-              <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; margin-bottom: 6px;">Requested Assistance</div>
-              <div style="background-color: #eff6ff; border-left: 4px solid #2563eb; border-radius: 4px; padding: 14px 16px; font-size: 14px; font-style: italic; color: #1e3a8a; line-height: 1.6; margin-bottom: 24px;">
-                "${helpNote}"
-              </div>
-
-              <!-- Button CTA -->
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px;">
-                <tr>
-                  <td align="center">
-                    <a href="${inviteToken ? `${frontendUrl}/invite/${inviteToken}` : `${frontendUrl}/professional-dashboard`}" style="display: inline-block; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600; padding: 14px 32px; border-radius: 50px; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);">
-                      Review & Respond to Request &rarr;
-                    </a>
-                  </td>
-                </tr>
-              </table>
-
-              <!-- Confidentiality Note -->
-              <p style="font-size: 12px; color: #94a3b8; line-height: 1.5; margin: 0; border-top: 1px solid #e2e8f0; padding-top: 16px;">
-                <strong>FPR Part 12 & PD 27A Notice:</strong> Family proceedings are confidential. Information disclosed via My Case Buddy is privileged for the purpose of receiving lay assistance and must not be communicated to third parties without court permission.
-              </p>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #f8fafc; padding: 16px 30px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
-              &copy; ${new Date().getFullYear()} My Case Buddy &bull; Support: support@mycasebuddy.justice.gov.uk
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+          const proHtml = renderEmail({
+            title: `New peer support request: ${caseNumber}`,
+            preheader: `${lipName} has asked for your help with a family court case.`,
+            tone: 'brand',
+            eyebrow: 'Peer support request',
+            icon: '&#129309;',
+            heroTitle: 'Someone has asked for your help',
+            heroSubtitle: 'UK Family Court &bull; Practice Direction 27A',
+            bodyHtml: [
+              paragraph(`Dear <strong style="color:#0f172a;">${esc(proName)}</strong>,`),
+              paragraph(
+                `<strong style="color:#0f172a;">${esc(lipName)}</strong> (<a href="mailto:${esc(lipEmail)}" style="color:#2b4acb;">${esc(lipEmail)}</a>) chose your profile in the verified legal directory and would like your help with their family court case.`
+              ),
+              detailsCard('Case summary', [
+                { label: 'Case', value: caseTitle },
+                { label: 'Reference', value: caseNumber },
+                { label: 'Court', value: court },
+                { label: 'Case type', value: caseType },
+                { label: 'Stage', value: stage },
+              ]),
+              quote(helpNote, 'brand', 'What they need help with'),
+              button(inviteToken ? `${frontendUrl}/invite/${inviteToken}` : `${frontendUrl}/professional-dashboard`, 'Review and respond'),
+            ].join('\n'),
+            smallPrint:
+              '<strong>FPR Part 12 &amp; PD 27A:</strong> family proceedings are confidential. Information shared through My Case Buddy is for giving lay assistance only and must not be passed on without the court&rsquo;s permission.',
+            supportEmail: 'support@mycasebuddy.justice.gov.uk',
+          });
 
           await emailService.send({
             from: sender,
@@ -467,84 +433,34 @@ export default factories.createCoreController('api::case.case', ({ strapi }) => 
 
         // 5b. Confirmation copy to the Litigant in Person (LIP)
         if (lipEmail && lipEmail.includes('@')) {
-          const lipHtml = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Peer Support Request Confirmation</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
-  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 30px 10px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 620px; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08); border: 1px solid #e2e8f0;">
-          
-          <!-- Banner -->
-          <tr>
-            <td style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); padding: 36px 30px; text-align: center;">
-              <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; width: 56px; height: 56px; line-height: 56px; text-align: center; font-size: 26px; margin-bottom: 12px;">
-                ✓
-              </div>
-              <h1 style="color: #ffffff; margin: 0 0 6px 0; font-size: 22px; font-weight: 700;">Request Successfully Dispatched</h1>
-              <div style="color: #d1fae5; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">
-                Peer Collaboration Confirmation
-              </div>
-            </td>
-          </tr>
-
-          <!-- Body -->
-          <tr>
-            <td style="padding: 32px;">
-              <p style="font-size: 16px; margin: 0 0 16px 0;">
-                Dear <strong>${lipName}</strong>,
-              </p>
-              <p style="font-size: 15px; line-height: 1.6; color: #334155; margin: 0 0 20px 0;">
-                Your peer support request for case <strong>${caseTitle}</strong> (Ref: <strong>${caseNumber}</strong>) has been successfully transmitted to:
-              </p>
-
-              <div style="background-color: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; padding: 18px; margin-bottom: 24px;">
-                <div style="font-size: 16px; font-weight: 700; color: #0f172a;">${proName}</div>
-                <div style="font-size: 13px; color: #059669; font-weight: 600; margin-top: 2px;">${proRole}${targetPro?.firm ? ` &bull; ${targetPro.firm}` : ''}</div>
-                ${targetPro?.registrationNumber ? `<div style="font-size: 12px; color: #64748b; margin-top: 4px;">Registration: ${targetPro.registrationNumber}</div>` : ''}
-              </div>
-
-              <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; margin-bottom: 6px;">Your Note to Supporter</div>
-              <div style="background-color: #f1f5f9; border-left: 4px solid #059669; border-radius: 4px; padding: 14px 16px; font-size: 14px; font-style: italic; color: #334155; line-height: 1.6; margin-bottom: 24px;">
-                "${helpNote}"
-              </div>
-
-              <p style="font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 20px 0;">
-                An email alert has been dispatched to ${proName}. We have also recorded an entry on your case timeline. Once the supporter accepts or contacts you, you will see their response on your dashboard.
-              </p>
-
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 20px;">
-                <tr>
-                  <td align="center">
-                    <a href="${frontendUrl}/" style="display: inline-block; background-color: #0f172a; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px 28px; border-radius: 50px;">
-                      Return to Dashboard &rarr;
-                    </a>
-                  </td>
-                </tr>
-              </table>
-
-              <p style="font-size: 12px; color: #94a3b8; line-height: 1.5; margin: 0; border-top: 1px solid #e2e8f0; padding-top: 16px;">
-                <strong>Privilege Notice:</strong> Your request is conducted under Practice Direction 27A guidelines for Litigants in Person.
-              </p>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #f8fafc; padding: 16px 30px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
-              &copy; ${new Date().getFullYear()} My Case Buddy &bull; Support: support@mycasebuddy.justice.gov.uk
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+          const lipHtml = renderEmail({
+            title: 'Your peer support request was sent',
+            preheader: `Your request has been sent to ${proName}.`,
+            tone: 'success',
+            eyebrow: 'Request sent',
+            icon: '&#10003;',
+            heroTitle: 'Your request is on its way',
+            heroSubtitle: `We have sent it to ${esc(proName)}.`,
+            bodyHtml: [
+              paragraph(`Dear <strong style="color:#0f172a;">${esc(lipName)}</strong>,`),
+              paragraph(
+                `Your request for help with <strong style="color:#0f172a;">${esc(caseTitle)}</strong> (reference <strong style="color:#0f172a;">${esc(caseNumber)}</strong>) has been sent to:`
+              ),
+              detailsCard('Legal supporter', [
+                { label: 'Name', value: proName },
+                { label: 'Role', value: proRole },
+                { label: 'Firm', value: targetPro?.firm || '' },
+                { label: 'Registration', value: targetPro?.registrationNumber || '' },
+              ]),
+              quote(helpNote, 'success', 'Your message'),
+              paragraph(
+                `We have emailed ${esc(proName)} and added a note to your case timeline. When they accept or get in touch, you will see it on your dashboard.`
+              ),
+              button(`${frontendUrl}/`, 'Go to my dashboard', 'success'),
+            ].join('\n'),
+            smallPrint: '<strong>Privilege notice:</strong> your request is made under Practice Direction 27A guidance for litigants in person.',
+            supportEmail: 'support@mycasebuddy.justice.gov.uk',
+          });
 
           await emailService.send({
             from: sender,
@@ -695,66 +611,32 @@ export default factories.createCoreController('api::case.case', ({ strapi }) => 
         const fromEmail = process.env.DEFAULT_FROM_EMAIL || process.env.SMTP_USERNAME || 'aliparvez20@gmail.com';
         const sender = `"My Case Buddy Legal Support" <${fromEmail}>`;
 
-        const acceptHtml = `<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="UTF-8"><title>Peer Support Request Accepted</title></head>
-<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
-  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 30px 10px;">
-    <tr>
-      <td align="center">
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 620px; background-color: #ffffff; border-radius: 14px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08); border: 1px solid #e2e8f0;">
-          <tr>
-            <td style="background: linear-gradient(135deg, #065f46 0%, #059669 50%, #10b981 100%); padding: 36px 30px; text-align: center;">
-              <div style="display: inline-block; background-color: rgba(255, 255, 255, 0.2); border-radius: 50%; width: 56px; height: 56px; line-height: 56px; text-align: center; font-size: 26px; margin-bottom: 12px;">🤝</div>
-              <h1 style="color: #ffffff; margin: 0 0 6px 0; font-size: 22px; font-weight: 700;">Peer Support Request Accepted!</h1>
-              <div style="color: #a7f3d0; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">UK Family Court &bull; Practice Direction 27A</div>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 32px;">
-              <p style="font-size: 16px; margin: 0 0 16px 0;">Dear <strong>${ownerName}</strong>,</p>
-              <p style="font-size: 15px; line-height: 1.6; color: #334155; margin: 0 0 20px 0;">
-                Great news! <strong>${proName}</strong> (<a href="mailto:${user.email}" style="color: #059669;">${user.email}</a>) has accepted your peer support request for your case.
-              </p>
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 24px; padding: 18px;">
-                <tr>
-                  <td>
-                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px; margin-bottom: 8px;">Case & Peer Supporter Summary</div>
-                    <div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">${caseRecord.title || 'Family Court Matter'}</div>
-                    <div style="font-size: 13px; color: #059669; font-weight: 600; margin-bottom: 12px;">Ref: ${caseRecord.caseNumber || 'N/A'}</div>
-                    <div style="font-size: 13px; color: #475569; line-height: 1.6;">
-                      <strong>Assigned Supporter:</strong> ${proName} (${proRole})<br/>
-                      <strong>Supporter Email:</strong> ${user.email}<br/>
-                      <strong>Court:</strong> ${caseRecord.court || 'Family Court'}
-                    </div>
-                  </td>
-                </tr>
-              </table>
-              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px;">
-                <tr>
-                  <td align="center">
-                    <a href="${frontendUrl}/cases/${resolvedDocId}" style="display: inline-block; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600; padding: 14px 32px; border-radius: 50px; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.35);">
-                      View Case & Supporter &rarr;
-                    </a>
-                  </td>
-                </tr>
-              </table>
-              <p style="font-size: 12px; color: #94a3b8; line-height: 1.5; margin: 0; border-top: 1px solid #e2e8f0; padding-top: 16px;">
-                <strong>FPR Part 12 & PD 27A Notice:</strong> Family proceedings are confidential. Your peer supporter has accepted terms of confidentiality under the Family Procedure Rules.
-              </p>
-            </td>
-          </tr>
-          <tr>
-            <td style="background-color: #f8fafc; padding: 16px 30px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
-              &copy; ${new Date().getFullYear()} My Case Buddy &bull; Support: support@mycasebuddy.justice.gov.uk
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+        const acceptHtml = renderEmail({
+          title: 'Your peer support request was accepted',
+          preheader: `${proName} has accepted your request and joined your case.`,
+          tone: 'success',
+          eyebrow: 'Good news',
+          icon: '&#129309;',
+          heroTitle: 'Your request has been accepted',
+          heroSubtitle: `${esc(proName)} has joined your case team.`,
+          bodyHtml: [
+            paragraph(`Dear <strong style="color:#0f172a;">${esc(ownerName)}</strong>,`),
+            paragraph(
+              `<strong style="color:#0f172a;">${esc(proName)}</strong> (<a href="mailto:${esc(user.email)}" style="color:#0e7a55;">${esc(user.email)}</a>) has accepted your peer support request and can now help with your case.`
+            ),
+            detailsCard('Case and supporter', [
+              { label: 'Case', value: caseRecord.title || 'Family Court Matter' },
+              { label: 'Reference', value: caseRecord.caseNumber || 'N/A' },
+              { label: 'Supporter', value: `${proName} (${proRole})` },
+              { label: 'Supporter email', value: user.email },
+              { label: 'Court', value: caseRecord.court || 'Family Court' },
+            ]),
+            button(`${frontendUrl}/cases/${resolvedDocId}`, 'View my case', 'success'),
+          ].join('\n'),
+          smallPrint:
+            '<strong>FPR Part 12 &amp; PD 27A:</strong> family proceedings are confidential. Your supporter has accepted the confidentiality terms of the Family Procedure Rules.',
+          supportEmail: 'support@mycasebuddy.justice.gov.uk',
+        });
 
         await emailService.send({
           from: sender,
