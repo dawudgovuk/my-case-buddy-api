@@ -55,7 +55,7 @@ export class UserRepository extends StrapiService {
     roleId?: number;
     extra?: Record<string, unknown>;
   }): Promise<AppUser> {
-    return (await this.strapi.entityService.create(USER_UID, {
+    const user = (await this.strapi.entityService.create(USER_UID, {
       data: {
         username: `${data.usernameBase}_${Math.random().toString(36).substring(2, 6)}`,
         email: data.email,
@@ -66,5 +66,18 @@ export class UserRepository extends StrapiService {
         ...(data.extra || {}),
       },
     })) as unknown as AppUser;
+
+    if (user?.id && data.roleId) {
+      try {
+        await this.strapi.db.connection.raw(
+          'INSERT INTO up_users_role_lnk (user_id, role_id, user_ord) VALUES (?, ?, 1) ON CONFLICT DO NOTHING',
+          [user.id, data.roleId]
+        );
+      } catch {
+        // Non-blocking
+      }
+    }
+
+    return user;
   }
 }

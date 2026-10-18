@@ -68,7 +68,7 @@ export default factories.createCoreController('api::case.case', ({ strapi }) => 
     },
 
     async update(ctx) {
-      const user = ctx.state.user as AppUser | undefined;
+      const user = await resolver.resolve(ctx);
       const docId = await resolveDocId(ctx.params.id);
       ctx.params.id = docId;
 
@@ -89,7 +89,7 @@ export default factories.createCoreController('api::case.case', ({ strapi }) => 
 
     /** Only the case owner (or an admin) may delete a case. */
     async delete(ctx) {
-      const user = ctx.state.user as AppUser | undefined;
+      const user = await resolver.resolve(ctx);
       const docId = await resolveDocId(ctx.params.id);
       ctx.params.id = docId;
 

@@ -16,13 +16,25 @@ export default factories.createCoreController('api::case-invite.case-invite', ({
         data.token ||= crypto.randomUUID();
         data.expiresAt ||= inviteExpiry();
         if (ctx.state.user && !data.createdBy) data.createdBy = ctx.state.user.id;
+
+        // Auto-resolve caseNumber to documentId if client passed caseNumber
+        if (typeof data.case === 'string' && data.case.startsWith('CASE_')) {
+          const found = await strapi.documents('api::case.case').findMany({
+            filters: { caseNumber: { $eq: data.case } },
+            limit: 1,
+          });
+          if (found?.[0]?.documentId) {
+            data.case = found[0].documentId;
+          }
+        }
       }
       return super.create(ctx);
     },
 
     /** POST /api/case-invites/accept */
     async accept(ctx) {
-      const user = await resolver.resolve(ctx);
+      const email = resolver.headerEmail(ctx);
+      const user = (await resolver.resolve(ctx)) || (await resolver.resolveOrProvision(ctx, email, 'McKenzieFriend'));
       if (!user) return ctx.unauthorized('Authentication required to accept an invite');
 
       const { token } = (ctx.request.body as { token?: string }) || {};
