@@ -109,6 +109,9 @@
     },
     "yearsExperience": {
       "type": "integer"
+    },
+    "phone": {
+      "type": "string"
     }
   }
 }

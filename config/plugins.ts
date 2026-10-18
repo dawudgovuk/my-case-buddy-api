@@ -44,6 +44,9 @@ const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin =>
   },
   'users-permissions': {
     config: {
+      register: {
+        allowedFields: ['userRole', 'firm', 'registrationNumber', 'bio', 'specialisms', 'yearsExperience', 'name'],
+      },
       jwtManagement: 'refresh',
       sessions: {
         httpOnly: true,
