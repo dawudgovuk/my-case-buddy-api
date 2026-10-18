@@ -83,6 +83,10 @@ class HearingStrategy extends BaseChildStrategy {
       judge: h.judge || undefined,
       notes: h.notes || undefined,
       outcome: h.outcome || undefined,
+      outcomeSummary: h.outcomeSummary || undefined,
+      remotePlatform: h.remotePlatform || undefined,
+      remoteLink: h.remoteLink || undefined,
+      specialMeasures: h.specialMeasures || undefined,
       case: caseDocumentId,
     };
   }
@@ -100,6 +104,9 @@ class OrderStrategy extends BaseChildStrategy {
       summary: String(o.summary || 'Court order'),
       expiresOn: o.expiresOn || undefined,
       documentUrl: o.documentUrl || undefined,
+      hasPenalNotice: Boolean(o.hasPenalNotice),
+      warningNotice: o.warningNotice || undefined,
+      complianceDeadlines: Array.isArray(o.complianceDeadlines) ? o.complianceDeadlines : undefined,
       case: caseDocumentId,
     };
   }

@@ -41,6 +41,18 @@
     "outcome": {
       "type": "text"
     },
+    "outcomeSummary": {
+      "type": "text"
+    },
+    "remotePlatform": {
+      "type": "string"
+    },
+    "remoteLink": {
+      "type": "string"
+    },
+    "specialMeasures": {
+      "type": "string"
+    },
     "case": {
       "type": "relation",
       "relation": "manyToOne",

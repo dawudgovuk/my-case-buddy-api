@@ -648,14 +648,21 @@ export interface ApiDocumentDocument extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    exhibitRef: Schema.Attribute.String;
+    fileName: Schema.Attribute.String;
+    fileSize: Schema.Attribute.Integer;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::document.document'
     > &
       Schema.Attribute.Private;
+    mimeType: Schema.Attribute.String;
     notes: Schema.Attribute.Text;
+    pageCount: Schema.Attribute.Integer;
     publishedAt: Schema.Attribute.DateTime;
+    status: Schema.Attribute.Enumeration<['Draft', 'Filed', 'Served']> &
+      Schema.Attribute.DefaultTo<'Draft'>;
     title: Schema.Attribute.String & Schema.Attribute.Required;
     type: Schema.Attribute.Enumeration<
       [
@@ -704,7 +711,11 @@ export interface ApiHearingHearing extends Struct.CollectionTypeSchema {
     location: Schema.Attribute.String;
     notes: Schema.Attribute.Text;
     outcome: Schema.Attribute.Text;
+    outcomeSummary: Schema.Attribute.Text;
     publishedAt: Schema.Attribute.DateTime;
+    remoteLink: Schema.Attribute.String;
+    remotePlatform: Schema.Attribute.String;
+    specialMeasures: Schema.Attribute.String;
     time: Schema.Attribute.String;
     type: Schema.Attribute.Enumeration<
       ['Case Management', 'Directions', 'Fact-Finding', 'Final', 'Other']
@@ -729,12 +740,15 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
   };
   attributes: {
     case: Schema.Attribute.Relation<'manyToOne', 'api::case.case'>;
+    complianceDeadlines: Schema.Attribute.JSON;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     dateMade: Schema.Attribute.Date & Schema.Attribute.Required;
     documentUrl: Schema.Attribute.String;
     expiresOn: Schema.Attribute.Date;
+    hasPenalNotice: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::order.order'> &
       Schema.Attribute.Private;
@@ -756,6 +770,7 @@ export interface ApiOrderOrder extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    warningNotice: Schema.Attribute.Text;
   };
 }
 
@@ -1281,6 +1296,7 @@ export interface PluginUsersPermissionsUser
       Schema.Attribute.SetMinMaxLength<{
         minLength: 6;
       }>;
+    phone: Schema.Attribute.String;
     provider: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
     registrationNumber: Schema.Attribute.String;

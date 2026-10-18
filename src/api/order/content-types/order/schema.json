@@ -39,6 +39,16 @@
     "documentUrl": {
       "type": "string"
     },
+    "hasPenalNotice": {
+      "type": "boolean",
+      "default": false
+    },
+    "warningNotice": {
+      "type": "text"
+    },
+    "complianceDeadlines": {
+      "type": "json"
+    },
     "case": {
       "type": "relation",
       "relation": "manyToOne",
