@@ -48,6 +48,18 @@
     "contactPhone": {
       "type": "string"
     },
+    "representation": {
+      "type": "string"
+    },
+    "parentalResponsibility": {
+      "type": "boolean"
+    },
+    "schoolOrNursery": {
+      "type": "string"
+    },
+    "specialMeasuresRequired": {
+      "type": "string"
+    },
     "case": {
       "type": "relation",
       "relation": "manyToOne",

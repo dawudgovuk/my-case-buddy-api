@@ -60,6 +60,10 @@ class PartyStrategy extends BaseChildStrategy {
       solicitorContact: p.solicitorContact || undefined,
       contactEmail: p.contactEmail || undefined,
       contactPhone: p.contactPhone || undefined,
+      representation: p.representation || undefined,
+      parentalResponsibility: typeof p.parentalResponsibility === 'boolean' ? p.parentalResponsibility : undefined,
+      schoolOrNursery: p.schoolOrNursery || undefined,
+      specialMeasuresRequired: p.specialMeasuresRequired || undefined,
       case: caseDocumentId,
     };
   }
@@ -142,6 +146,7 @@ class NoteStrategy extends BaseChildStrategy {
     return {
       author: String(n.author || 'Author'),
       text: String(n.text || ''),
+      category: n.category || undefined,
       case: caseDocumentId,
     };
   }

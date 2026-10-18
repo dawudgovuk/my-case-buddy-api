@@ -19,6 +19,9 @@
       "type": "text",
       "required": true
     },
+    "category": {
+      "type": "string"
+    },
     "case": {
       "type": "relation",
       "relation": "manyToOne",
