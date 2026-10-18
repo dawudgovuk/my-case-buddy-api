@@ -49,6 +49,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<'authenticated' | 'public', readon
   'plugin::users-permissions.user.find',
   'plugin::users-permissions.user.findOne',
   'plugin::users-permissions.user.me',
+  'plugin::users-permissions.user.update',
   ],
   public: [
   'api::case.case.find',

@@ -38,6 +38,30 @@
     "notes": {
       "type": "text"
     },
+    "fileName": {
+      "type": "string"
+    },
+    "fileSize": {
+      "type": "integer"
+    },
+    "mimeType": {
+      "type": "string"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "Draft",
+        "Filed",
+        "Served"
+      ],
+      "default": "Draft"
+    },
+    "pageCount": {
+      "type": "integer"
+    },
+    "exhibitRef": {
+      "type": "string"
+    },
     "case": {
       "type": "relation",
       "relation": "manyToOne",

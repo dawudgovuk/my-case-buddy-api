@@ -116,6 +116,12 @@ class DocumentStrategy extends BaseChildStrategy {
       url: String(d.url || 'https://placeholder.invalid'),
       uploadedAt: d.uploadedAt || new Date().toISOString(),
       notes: d.notes || undefined,
+      fileName: d.fileName || undefined,
+      fileSize: typeof d.fileSize === 'number' ? d.fileSize : undefined,
+      mimeType: d.mimeType || undefined,
+      status: d.status || 'Draft',
+      pageCount: typeof d.pageCount === 'number' ? d.pageCount : undefined,
+      exhibitRef: d.exhibitRef || undefined,
       case: caseDocumentId,
     };
   }
