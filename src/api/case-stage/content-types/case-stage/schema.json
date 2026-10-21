@@ -1,0 +1,44 @@
+{
+  "kind": "collectionType",
+  "collectionName": "case_stages",
+  "info": {
+    "singularName": "case-stage",
+    "pluralName": "case-stages",
+    "displayName": "Case Stage",
+    "description": "Dynamic procedural timeline stages for case types"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "key": {
+      "type": "string",
+      "required": true
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "order": {
+      "type": "integer",
+      "required": true,
+      "default": 1
+    },
+    "caseTypeCode": {
+      "type": "string"
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    },
+    "caseType": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::case-type.case-type",
+      "inversedBy": "stages"
+    }
+  }
+}

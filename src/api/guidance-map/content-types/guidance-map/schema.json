@@ -1,0 +1,42 @@
+{
+  "kind": "collectionType",
+  "collectionName": "guidance_maps",
+  "info": {
+    "singularName": "guidance-map",
+    "pluralName": "guidance-maps",
+    "displayName": "Guidance Map",
+    "description": "Macro legal process roadmaps for UK Court"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "category": {
+      "type": "string"
+    },
+    "preconditions": {
+      "type": "text"
+    },
+    "postconditions": {
+      "type": "text"
+    },
+    "journeys": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::guidance-journey.guidance-journey",
+      "inversedBy": "maps"
+    }
+  }
+}

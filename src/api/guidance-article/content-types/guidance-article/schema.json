@@ -1,0 +1,45 @@
+{
+  "kind": "collectionType",
+  "collectionName": "guidance_articles",
+  "info": {
+    "singularName": "guidance-article",
+    "pluralName": "guidance-articles",
+    "displayName": "Guidance Article",
+    "description": "Plain-English procedural guide and instructions"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "title",
+      "required": true
+    },
+    "content": {
+      "type": "text"
+    },
+    "keywords": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "steps": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::guidance-step.guidance-step",
+      "mappedBy": "articles"
+    },
+    "references": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::guidance-reference.guidance-reference",
+      "inversedBy": "articles"
+    }
+  }
+}

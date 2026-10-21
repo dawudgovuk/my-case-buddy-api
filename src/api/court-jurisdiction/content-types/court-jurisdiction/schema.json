@@ -1,0 +1,36 @@
+{
+  "kind": "collectionType",
+  "collectionName": "court_jurisdictions",
+  "info": {
+    "singularName": "court-jurisdiction",
+    "pluralName": "court-jurisdictions",
+    "displayName": "Court Jurisdiction",
+    "description": "Dynamic UK Court Venues & Jurisdictions"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "order": {
+      "type": "integer",
+      "default": 1
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

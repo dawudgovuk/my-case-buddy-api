@@ -499,6 +499,7 @@ export interface ApiCaseNoteCaseNote extends Struct.CollectionTypeSchema {
   attributes: {
     author: Schema.Attribute.String & Schema.Attribute.Required;
     case: Schema.Attribute.Relation<'manyToOne', 'api::case.case'>;
+    category: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -510,6 +511,87 @@ export interface ApiCaseNoteCaseNote extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
     text: Schema.Attribute.Text & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiCaseStageCaseStage extends Struct.CollectionTypeSchema {
+  collectionName: 'case_stages';
+  info: {
+    description: 'Dynamic procedural timeline stages for case types';
+    displayName: 'Case Stage';
+    pluralName: 'case-stages';
+    singularName: 'case-stage';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    caseType: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::case-type.case-type'
+    >;
+    caseTypeCode: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
+    isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    key: Schema.Attribute.String & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::case-stage.case-stage'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
+    order: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<1>;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiCaseTypeCaseType extends Struct.CollectionTypeSchema {
+  collectionName: 'case_types';
+  info: {
+    description: 'Dynamic legal case types and proceedings tracks';
+    displayName: 'Case Type / Proceedings Track';
+    pluralName: 'case-types';
+    singularName: 'case-type';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    code: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
+    isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::case-type.case-type'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
+    publishedAt: Schema.Attribute.DateTime;
+    stages: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::case-stage.case-stage'
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -532,22 +614,11 @@ export interface ApiCaseCase extends Struct.CollectionTypeSchema {
     caseNumber: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.Unique;
-    caseType: Schema.Attribute.Enumeration<
-      [
-        'Public Law (Care Proceedings)',
-        'Private Law (Child Arrangements)',
-        'Domestic Abuse (Non-Molestation)',
-        'Financial Remedies',
-        'Adoption',
-        'Other',
-      ]
-    > &
-      Schema.Attribute.Required;
+    caseType: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'Private Law (Child Arrangements)'>;
     childrenInvolved: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>;
-    court: Schema.Attribute.Enumeration<
-      ['Family Court', 'High Court Family Division']
-    > &
-      Schema.Attribute.DefaultTo<'Family Court'>;
+    court: Schema.Attribute.String & Schema.Attribute.DefaultTo<'Family Court'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -585,6 +656,44 @@ export interface ApiCaseCase extends Struct.CollectionTypeSchema {
     status: Schema.Attribute.Enumeration<['Open', 'Stayed', 'Concluded']> &
       Schema.Attribute.DefaultTo<'Open'>;
     title: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiCourtJurisdictionCourtJurisdiction
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'court_jurisdictions';
+  info: {
+    description: 'Dynamic UK Court Venues & Jurisdictions';
+    displayName: 'Court Jurisdiction';
+    pluralName: 'court-jurisdictions';
+    singularName: 'court-jurisdiction';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    code: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
+    isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::court-jurisdiction.court-jurisdiction'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
+    publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -681,6 +790,214 @@ export interface ApiDocumentDocument extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     uploadedAt: Schema.Attribute.DateTime;
     url: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
+export interface ApiGuidanceArticleGuidanceArticle
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'guidance_articles';
+  info: {
+    description: 'Plain-English procedural guide and instructions';
+    displayName: 'Guidance Article';
+    pluralName: 'guidance-articles';
+    singularName: 'guidance-article';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    category: Schema.Attribute.String;
+    content: Schema.Attribute.Text;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    keywords: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::guidance-article.guidance-article'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    references: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::guidance-reference.guidance-reference'
+    >;
+    slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
+    steps: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::guidance-step.guidance-step'
+    >;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiGuidanceJourneyGuidanceJourney
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'guidance_journeys';
+  info: {
+    description: 'Milestone phase within a legal roadmap';
+    displayName: 'Guidance Journey';
+    pluralName: 'guidance-journeys';
+    singularName: 'guidance-journey';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::guidance-journey.guidance-journey'
+    > &
+      Schema.Attribute.Private;
+    maps: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::guidance-map.guidance-map'
+    >;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
+    order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
+    publishedAt: Schema.Attribute.DateTime;
+    slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
+    steps: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::guidance-step.guidance-step'
+    >;
+    type: Schema.Attribute.String;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiGuidanceMapGuidanceMap extends Struct.CollectionTypeSchema {
+  collectionName: 'guidance_maps';
+  info: {
+    description: 'Macro legal process roadmaps for UK Court';
+    displayName: 'Guidance Map';
+    pluralName: 'guidance-maps';
+    singularName: 'guidance-map';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    category: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
+    journeys: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::guidance-journey.guidance-journey'
+    >;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::guidance-map.guidance-map'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
+    postconditions: Schema.Attribute.Text;
+    preconditions: Schema.Attribute.Text;
+    publishedAt: Schema.Attribute.DateTime;
+    slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiGuidanceReferenceGuidanceReference
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'guidance_references';
+  info: {
+    description: 'Court forms, official tools, and statutory references';
+    displayName: 'Guidance Reference';
+    pluralName: 'guidance-references';
+    singularName: 'guidance-reference';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    articles: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::guidance-article.guidance-article'
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    keywords: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::guidance-reference.guidance-reference'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
+    type: Schema.Attribute.Enumeration<
+      ['Form', 'Document', 'Web', 'Video', 'Case']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'Form'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    url: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
+export interface ApiGuidanceStepGuidanceStep
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'guidance_steps';
+  info: {
+    description: 'Concrete actionable step in a legal journey';
+    displayName: 'Guidance Step';
+    pluralName: 'guidance-steps';
+    singularName: 'guidance-step';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    articles: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::guidance-article.guidance-article'
+    >;
+    category: Schema.Attribute.String;
+    conditionCriteria: Schema.Attribute.Text;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
+    isConditional: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
+    journeys: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::guidance-journey.guidance-journey'
+    >;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::guidance-step.guidance-step'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
+    order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
+    publishedAt: Schema.Attribute.DateTime;
+    slug: Schema.Attribute.UID<'name'> & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
   };
 }
 
@@ -799,13 +1116,17 @@ export interface ApiPartyParty extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<'oneToMany', 'api::party.party'> &
       Schema.Attribute.Private;
+    parentalResponsibility: Schema.Attribute.Boolean;
     publishedAt: Schema.Attribute.DateTime;
+    representation: Schema.Attribute.String;
     role: Schema.Attribute.Enumeration<
       ['Applicant', 'Respondent', 'Child', 'Guardian', 'Intervener']
     > &
       Schema.Attribute.Required;
+    schoolOrNursery: Schema.Attribute.String;
     solicitorContact: Schema.Attribute.String;
     solicitorFirm: Schema.Attribute.String;
+    specialMeasuresRequired: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1342,9 +1663,17 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::case-invite.case-invite': ApiCaseInviteCaseInvite;
       'api::case-note.case-note': ApiCaseNoteCaseNote;
+      'api::case-stage.case-stage': ApiCaseStageCaseStage;
+      'api::case-type.case-type': ApiCaseTypeCaseType;
       'api::case.case': ApiCaseCase;
+      'api::court-jurisdiction.court-jurisdiction': ApiCourtJurisdictionCourtJurisdiction;
       'api::document-deadline.document-deadline': ApiDocumentDeadlineDocumentDeadline;
       'api::document.document': ApiDocumentDocument;
+      'api::guidance-article.guidance-article': ApiGuidanceArticleGuidanceArticle;
+      'api::guidance-journey.guidance-journey': ApiGuidanceJourneyGuidanceJourney;
+      'api::guidance-map.guidance-map': ApiGuidanceMapGuidanceMap;
+      'api::guidance-reference.guidance-reference': ApiGuidanceReferenceGuidanceReference;
+      'api::guidance-step.guidance-step': ApiGuidanceStepGuidanceStep;
       'api::hearing.hearing': ApiHearingHearing;
       'api::order.order': ApiOrderOrder;
       'api::party.party': ApiPartyParty;

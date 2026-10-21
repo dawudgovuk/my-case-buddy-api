@@ -98,6 +98,15 @@ async function cleanDatabase() {
       'cases_members_lnk',
       'cases_owner_lnk',
       'cases',
+      'guidance_articles_references_lnk',
+      'guidance_steps_articles_lnk',
+      'guidance_journeys_steps_lnk',
+      'guidance_maps_journeys_lnk',
+      'guidance_articles',
+      'guidance_steps',
+      'guidance_journeys',
+      'guidance_maps',
+      'guidance_references',
     ];
 
     if (!keepUsers) {

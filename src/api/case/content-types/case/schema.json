@@ -21,24 +21,13 @@
       "required": true
     },
     "court": {
-      "type": "enumeration",
-      "enum": [
-        "Family Court",
-        "High Court Family Division"
-      ],
+      "type": "string",
       "default": "Family Court"
     },
     "caseType": {
-      "type": "enumeration",
-      "enum": [
-        "Public Law (Care Proceedings)",
-        "Private Law (Child Arrangements)",
-        "Domestic Abuse (Non-Molestation)",
-        "Financial Remedies",
-        "Adoption",
-        "Other"
-      ],
-      "required": true
+      "type": "string",
+      "required": true,
+      "default": "Private Law (Child Arrangements)"
     },
     "status": {
       "type": "enumeration",

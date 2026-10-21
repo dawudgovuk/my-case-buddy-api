@@ -1,0 +1,46 @@
+{
+  "kind": "collectionType",
+  "collectionName": "guidance_journeys",
+  "info": {
+    "singularName": "guidance-journey",
+    "pluralName": "guidance-journeys",
+    "displayName": "Guidance Journey",
+    "description": "Milestone phase within a legal roadmap"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "type": {
+      "type": "string"
+    },
+    "order": {
+      "type": "integer",
+      "default": 1
+    },
+    "maps": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::guidance-map.guidance-map",
+      "mappedBy": "journeys"
+    },
+    "steps": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::guidance-step.guidance-step",
+      "inversedBy": "journeys"
+    }
+  }
+}

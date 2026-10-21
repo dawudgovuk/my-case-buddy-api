@@ -1,0 +1,53 @@
+{
+  "kind": "collectionType",
+  "collectionName": "guidance_steps",
+  "info": {
+    "singularName": "guidance-step",
+    "pluralName": "guidance-steps",
+    "displayName": "Guidance Step",
+    "description": "Concrete actionable step in a legal journey"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "order": {
+      "type": "integer",
+      "default": 1
+    },
+    "isConditional": {
+      "type": "boolean",
+      "default": false
+    },
+    "conditionCriteria": {
+      "type": "text"
+    },
+    "category": {
+      "type": "string"
+    },
+    "journeys": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::guidance-journey.guidance-journey",
+      "mappedBy": "steps"
+    },
+    "articles": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::guidance-article.guidance-article",
+      "inversedBy": "steps"
+    }
+  }
+}

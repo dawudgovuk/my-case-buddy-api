@@ -1,0 +1,42 @@
+{
+  "kind": "collectionType",
+  "collectionName": "case_types",
+  "info": {
+    "singularName": "case-type",
+    "pluralName": "case-types",
+    "displayName": "Case Type / Proceedings Track",
+    "description": "Dynamic legal case types and proceedings tracks"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "order": {
+      "type": "integer",
+      "default": 1
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    },
+    "stages": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::case-stage.case-stage",
+      "mappedBy": "caseType"
+    }
+  }
+}

@@ -9,6 +9,7 @@
     "db:fresh": "node scripts/clean-db.js",
     "db:clean-users": "node scripts/clean-users.js",
     "db:seed": "node scripts/seed-db.js",
+    "db:seed:guidance": "node scripts/seed-guidance.js",
     "db:reset": "node scripts/clean-db.js && node scripts/seed-db.js",
     "db:migrate": "node scripts/migrate.js up",
     "db:migrate:status": "node scripts/migrate.js status",

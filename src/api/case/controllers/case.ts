@@ -78,7 +78,8 @@ export default factories.createCoreController('api::case.case', ({ strapi }) => 
 
       const body = ctx.request.body as CaseBody;
       const { core, children } = splitCasePayload(body);
-      if (body) body.data = core;
+      const { ownerEmail, userRole, owner, members, ...coreData } = core;
+      if (body) body.data = coreData;
 
       await super.update(ctx);
       if (!docId) return super.update(ctx);
