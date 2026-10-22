@@ -19,6 +19,7 @@
     "console": "strapi console",
     "deploy": "strapi deploy",
     "dev": "strapi develop",
+    "dev:api": "strapi develop --no-build-admin --no-watch-admin",
     "develop": "strapi develop",
     "test:neon": "node scripts/test-neon.js",
     "start": "strapi start",
