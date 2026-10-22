@@ -10,6 +10,11 @@
   "options": {
     "draftAndPublish": false
   },
+  "pluginOptions": {
+    "i18n": {
+      "localized": true
+    }
+  },
   "attributes": {
     "caseNumber": {
       "type": "string",
@@ -18,7 +23,12 @@
     },
     "title": {
       "type": "string",
-      "required": true
+      "required": true,
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "court": {
       "type": "string",
@@ -43,10 +53,20 @@
       "required": true
     },
     "allocatedJudge": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "currentStage": {
-      "type": "string"
+      "type": "string",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "childrenInvolved": {
       "type": "integer",
@@ -57,7 +77,12 @@
       "default": false
     },
     "peerSupportNote": {
-      "type": "text"
+      "type": "text",
+      "pluginOptions": {
+        "i18n": {
+          "localized": true
+        }
+      }
     },
     "peerSupportRequestedAt": {
       "type": "datetime"
