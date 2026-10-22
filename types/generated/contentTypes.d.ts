@@ -517,6 +517,45 @@ export interface ApiCaseNoteCaseNote extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiCasePresetCasePreset extends Struct.CollectionTypeSchema {
+  collectionName: 'case_presets';
+  info: {
+    description: 'Pre-populated standard court jurisdiction and proceedings track presets for one-click setup';
+    displayName: 'Case Quick Preset';
+    pluralName: 'case-presets';
+    singularName: 'case-preset';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    caseType: Schema.Attribute.String & Schema.Attribute.Required;
+    court: Schema.Attribute.String & Schema.Attribute.DefaultTo<'Family Court'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
+    icon: Schema.Attribute.String & Schema.Attribute.DefaultTo<'child'>;
+    isActive: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>;
+    label: Schema.Attribute.String & Schema.Attribute.Required;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::case-preset.case-preset'
+    > &
+      Schema.Attribute.Private;
+    order: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<1>;
+    presetKey: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    publishedAt: Schema.Attribute.DateTime;
+    titleTemplate: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiCaseStageCaseStage extends Struct.CollectionTypeSchema {
   collectionName: 'case_stages';
   info: {
@@ -1663,6 +1702,7 @@ declare module '@strapi/strapi' {
       'admin::user': AdminUser;
       'api::case-invite.case-invite': ApiCaseInviteCaseInvite;
       'api::case-note.case-note': ApiCaseNoteCaseNote;
+      'api::case-preset.case-preset': ApiCasePresetCasePreset;
       'api::case-stage.case-stage': ApiCaseStageCaseStage;
       'api::case-type.case-type': ApiCaseTypeCaseType;
       'api::case.case': ApiCaseCase;

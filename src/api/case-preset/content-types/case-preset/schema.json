@@ -1,0 +1,51 @@
+{
+  "kind": "collectionType",
+  "collectionName": "case_presets",
+  "info": {
+    "singularName": "case-preset",
+    "pluralName": "case-presets",
+    "displayName": "Case Quick Preset",
+    "description": "Pre-populated standard court jurisdiction and proceedings track presets for one-click setup"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "presetKey": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "label": {
+      "type": "string",
+      "required": true
+    },
+    "titleTemplate": {
+      "type": "string",
+      "required": true
+    },
+    "caseType": {
+      "type": "string",
+      "required": true
+    },
+    "court": {
+      "type": "string",
+      "default": "Family Court"
+    },
+    "icon": {
+      "type": "string",
+      "default": "child"
+    },
+    "description": {
+      "type": "text"
+    },
+    "order": {
+      "type": "integer",
+      "default": 1
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}
