@@ -4,6 +4,12 @@
  */
 export type EntityId = number | string;
 
+export interface AppRole {
+  id?: number;
+  name?: string;
+  type?: string;
+}
+
 export interface AppUser {
   id: number;
   documentId?: string;
@@ -17,7 +23,7 @@ export interface AppUser {
   bio?: string | null;
   specialisms?: unknown;
   yearsExperience?: number | null;
-  role?: { type?: string } | null;
+  role?: AppRole | null;
 }
 
 export interface RelatedRef {

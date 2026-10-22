@@ -1,7 +1,7 @@
 import type { Core } from '@strapi/strapi';
 import { StrapiService } from '../core/strapi-service';
 import { isNumericId, type AppUser, type EntityId } from '../domain/models';
-import type { UserRole } from '../domain/roles';
+import { userRoleToSlug, roleDisplayName, type UserRole } from '../domain/roles';
 
 const USER_UID = 'plugin::users-permissions.user';
 const ROLE_UID = 'plugin::users-permissions.role';
@@ -13,13 +13,17 @@ export class UserRepository extends StrapiService {
   }
 
   async findByEmail(email: string): Promise<AppUser | null> {
-    return (await this.strapi.db.query(USER_UID).findOne({ where: { email } })) as AppUser | null;
+    return (await this.strapi.db.query(USER_UID).findOne({
+      where: { email },
+      populate: ['role'],
+    })) as AppUser | null;
   }
 
   /** Looks a user up by numeric id or documentId. */
   async findById(userId: EntityId): Promise<AppUser | null> {
     return (await this.strapi.db.query(USER_UID).findOne({
       where: isNumericId(userId) ? { id: Number(userId) } : { documentId: String(userId) },
+      populate: ['role'],
     })) as AppUser | null;
   }
 
@@ -33,12 +37,20 @@ export class UserRepository extends StrapiService {
           { email: identifier },
         ],
       },
+      populate: ['role'],
     })) as AppUser | null;
   }
 
   async findByRoles(roles: readonly string[]): Promise<AppUser[]> {
+    const slugs = roles.map((r) => userRoleToSlug(r));
     return (await this.strapi.db.query(USER_UID).findMany({
-      where: { userRole: { $in: [...roles] } },
+      where: {
+        $or: [
+          { userRole: { $in: [...roles] } },
+          { role: { type: { $in: slugs } } },
+        ],
+      },
+      populate: ['role'],
     })) as AppUser[];
   }
 
@@ -47,7 +59,22 @@ export class UserRepository extends StrapiService {
     return role?.id;
   }
 
-  /** Creates a confirmed local user with a random username suffix. */
+  /** Finds the role ID corresponding to a domain UserRole. */
+  async findRoleIdForUserRole(userRole: UserRole | string): Promise<number | undefined> {
+    const slug = userRoleToSlug(userRole);
+    const role = (await this.strapi.db.query(ROLE_UID).findOne({
+      where: {
+        $or: [
+          { type: slug },
+          { name: roleDisplayName(userRole) },
+          { name: userRole },
+        ],
+      },
+    })) as { id?: number } | null;
+    return role?.id;
+  }
+
+  /** Creates a confirmed local user with a random username suffix and binds to their Strapi role. */
   async createLocalUser(data: {
     usernameBase: string;
     email: string;
@@ -55,6 +82,9 @@ export class UserRepository extends StrapiService {
     roleId?: number;
     extra?: Record<string, unknown>;
   }): Promise<AppUser> {
+    const targetRoleId =
+      data.roleId || (await this.findRoleIdForUserRole(data.userRole)) || (await this.findAuthenticatedRoleId());
+
     const user = (await this.strapi.entityService.create(USER_UID, {
       data: {
         username: `${data.usernameBase}_${Math.random().toString(36).substring(2, 6)}`,
@@ -62,19 +92,26 @@ export class UserRepository extends StrapiService {
         provider: 'local',
         confirmed: true,
         userRole: data.userRole,
-        role: data.roleId,
+        role: targetRoleId,
         ...(data.extra || {}),
       },
     })) as unknown as AppUser;
 
-    if (user?.id && data.roleId) {
+    if (user?.id && targetRoleId) {
       try {
-        await this.strapi.db.connection.raw(
-          'INSERT INTO up_users_role_lnk (user_id, role_id, user_ord) VALUES (?, ?, 1) ON CONFLICT DO NOTHING',
-          [user.id, data.roleId]
-        );
+        const linkTable = this.strapi.db.connection('up_users_role_lnk');
+        const existing = await linkTable.where({ user_id: user.id }).first();
+        if (existing) {
+          await linkTable.where({ user_id: user.id }).update({ role_id: targetRoleId });
+        } else {
+          await linkTable.insert({
+            user_id: user.id,
+            role_id: targetRoleId,
+            user_ord: 1,
+          });
+        }
       } catch {
-        // Non-blocking
+        // Non-blocking fallback
       }
     }
 

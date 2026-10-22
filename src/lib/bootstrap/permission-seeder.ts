@@ -23,14 +23,22 @@ export class PermissionSeeder extends StrapiService {
   async seed(): Promise<void> {
     try {
       const roles = (await this.strapi.db.query(ROLE_UID).findMany()) as RoleRow[];
-      if (await this.alreadySeeded()) {
-        this.log.info('✅ Permissions already fully configured');
-        return;
-      }
-      for (const roleType of ['authenticated', 'public'] as const) {
+      
+      // Grant authenticated permissions to Authenticated and all domain-specific roles
+      const authenticatedRoles = ['authenticated', 'lip', 'mckenzie_friend', 'solicitor', 'barrister'] as const;
+      for (const roleType of authenticatedRoles) {
         const role = roles?.find((r) => r.type === roleType);
-        if (role) await this.grant(role, roleType, DEFAULT_ROLE_PERMISSIONS[roleType]);
+        if (role) {
+          await this.grant(role, roleType, DEFAULT_ROLE_PERMISSIONS.authenticated);
+        }
       }
+
+      // Grant public permissions
+      const publicRole = roles?.find((r) => r.type === 'public');
+      if (publicRole) {
+        await this.grant(publicRole, 'public', DEFAULT_ROLE_PERMISSIONS.public);
+      }
+      this.log.info('✅ Permissions synced across all Strapi domain roles');
     } catch (err: unknown) {
       this.log.warn('Could not auto-seed default permissions:', err);
     }

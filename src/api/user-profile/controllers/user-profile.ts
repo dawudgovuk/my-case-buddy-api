@@ -33,6 +33,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
 
         const freshUser = await strapi.db.query('plugin::users-permissions.user').findOne({
           where: { id: user.id },
+          populate: ['role'],
         });
 
         return ctx.send({
@@ -79,12 +80,29 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
           const r = String(body.userRole || body.role);
           if (['LIP', 'McKenzieFriend', 'Solicitor', 'Barrister'].includes(r)) {
             updateData.userRole = r;
+            const userRepo = new UserRepository(strapi);
+            const roleId = await userRepo.findRoleIdForUserRole(r as UserRole);
+            if (roleId) {
+              updateData.role = roleId;
+              try {
+                const linkTable = strapi.db.connection('up_users_role_lnk');
+                const existing = await linkTable.where({ user_id: user.id }).first();
+                if (existing) {
+                  await linkTable.where({ user_id: user.id }).update({ role_id: roleId });
+                } else {
+                  await linkTable.insert({ user_id: user.id, role_id: roleId, user_ord: 1 });
+                }
+              } catch {
+                // Non-blocking
+              }
+            }
           }
         }
 
         const updated = await strapi.db.query('plugin::users-permissions.user').update({
           where: { id: user.id },
           data: updateData,
+          populate: ['role'],
         });
 
         // Mirror name to neon_auth.user if table exists and user has Neon auth entry

@@ -54,7 +54,7 @@ function toProfile(u: AppUser): ProfessionalProfile {
     id: String(u.documentId || u.id),
     name: u.name || u.username || 'Legal Professional',
     email: u.email,
-    role: u.userRole,
+    role: (typeof u.role === 'object' && u.role !== null ? (u.role.name || u.role.type) : u.role || u.userRole) as AppUser['userRole'],
     firm: u.firm,
     registrationNumber: u.registrationNumber,
     isVerified: Boolean(u.confirmed),

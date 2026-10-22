@@ -44,7 +44,7 @@ export class RequestUserResolver {
       usernameBase: email.split('@')[0],
       email,
       userRole,
-      roleId: await this.users.findAuthenticatedRoleId(),
+      roleId: await this.users.findRoleIdForUserRole(userRole),
     });
   }
 }
