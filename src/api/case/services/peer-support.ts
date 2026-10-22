@@ -6,6 +6,7 @@ import { CaseMembership } from '../../../lib/cases/case-membership';
 import type { AppUser, CaseRecord } from '../../../lib/domain/models';
 import { isProfessionalRole } from '../../../lib/domain/roles';
 import { Mailer } from '../../../lib/email/mailer';
+import { TemplateService } from '../../../lib/email/template-service';
 import {
   PeerSupportConfirmationEmail,
   PeerSupportRequestEmail,
@@ -88,6 +89,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
       let emailDispatched = false;
       try {
         if (mailer.isAvailable()) {
+          const templateService = new TemplateService(strapi);
           const frontendUrl = AppConfig.frontendUrl();
           const summary = {
             caseNumber: caseRecord?.caseNumber || 'FC-2026',
@@ -98,7 +100,7 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
           };
 
           if (targetPro?.email) {
-            const content = new PeerSupportRequestEmail().render({
+            const reqData = {
               ...summary,
               proName,
               lipName,
@@ -106,14 +108,22 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
               helpNote,
               frontendUrl,
               actionUrl: inviteToken ? `${frontendUrl}/invite/${inviteToken}` : `${frontendUrl}/professional-dashboard`,
+            };
+            const rendered = await templateService.renderTemplate('peer_support_request', reqData, 'en');
+            await mailer.send({
+              senderName: rendered.senderName || SENDER_NAME,
+              replyTo: lipEmail,
+              to: targetPro.email,
+              subject: rendered.subject,
+              html: rendered.html,
+              text: rendered.text,
             });
-            await mailer.send({ senderName: SENDER_NAME, replyTo: lipEmail, to: targetPro.email, ...content });
             strapi.log.info(`[PeerSupport] Sent notification email to legal supporter: ${targetPro.email}`);
             emailDispatched = true;
           }
 
           if (lipEmail && lipEmail.includes('@')) {
-            const content = new PeerSupportConfirmationEmail().render({
+            const confData = {
               lipName,
               proName,
               proRole,
@@ -123,8 +133,16 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
               caseNumber: summary.caseNumber,
               helpNote,
               frontendUrl,
+            };
+            const rendered = await templateService.renderTemplate('peer_support_confirmation', confData, 'en');
+            await mailer.send({
+              senderName: rendered.senderName || SENDER_NAME,
+              replyTo: mailer.fromAddress(),
+              to: lipEmail,
+              subject: rendered.subject,
+              html: rendered.html,
+              text: rendered.text,
             });
-            await mailer.send({ senderName: SENDER_NAME, replyTo: mailer.fromAddress(), to: lipEmail, ...content });
             strapi.log.info(`[PeerSupport] Sent confirmation email copy to requesting LIP: ${lipEmail}`);
             emailDispatched = true;
           }

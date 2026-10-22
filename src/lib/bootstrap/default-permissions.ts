@@ -68,6 +68,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<'authenticated' | 'public', readon
   'api::guidance-article.guidance-article.findOne',
   'api::guidance-reference.guidance-reference.find',
   'api::guidance-reference.guidance-reference.findOne',
+  'api::email-template.email-template.find',
+  'api::email-template.email-template.findOne',
   ],
   public: [
   'api::case.case.find',
@@ -113,6 +115,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<'authenticated' | 'public', readon
   'api::guidance-article.guidance-article.findOne',
   'api::guidance-reference.guidance-reference.find',
   'api::guidance-reference.guidance-reference.findOne',
+  'api::email-template.email-template.find',
+  'api::email-template.email-template.findOne',
   'plugin::users-permissions.user.find',
   ],
 };

@@ -15,14 +15,16 @@ export default ({ strapi }: { strapi: Core.Strapi }) => ({
    */
   async sendRegistrationEmails(ctx: NotificationContext) {
     try {
-      const { name, email, role = 'LIP', token, verificationUrl, referenceId } = ctx.request.body || {};
+      const body = ctx.request.body || {};
+      const { name, email, role = 'LIP', token, verificationUrl, referenceId } = body;
+      const locale = body.locale || (ctx as any).query?.locale || 'en';
       if (!name || !email) {
         return ctx.badRequest('Missing required fields: name and email are mandatory');
       }
 
       const result = await strapi
         .service('api::auth-notification.auth-notification')
-        .dispatchRegistrationEmails({ name, email, role, token, verificationUrl, referenceId });
+        .dispatchRegistrationEmails({ name, email, role, token, verificationUrl, referenceId, locale });
 
       return ctx.send({
         success: true,
